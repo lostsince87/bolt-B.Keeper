@@ -1,0 +1,266 @@
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle } from 'lucide-react-native';
+import { router } from 'expo-router';
+
+export default function HivesScreen() {
+  const hives = [
+    {
+      id: 1,
+      name: 'Kupa Alpha',
+      location: 'Norra ängen',
+      lastInspection: '2024-01-15',
+      status: 'excellent',
+      population: 'Stark',
+      varroa: '1.2%',
+      honey: '25 kg',
+      frames: '18/20',
+    },
+    {
+      id: 2,
+      name: 'Kupa Beta',
+      location: 'Södra skogen',
+      lastInspection: '2024-01-12',
+      status: 'good',
+      population: 'Medel',
+      varroa: '2.8%',
+      honey: '18 kg',
+      frames: '14/20',
+    },
+    {
+      id: 3,
+      name: 'Kupa Gamma',
+      location: 'Östra fältet',
+      lastInspection: '2024-01-10',
+      status: 'warning',
+      population: 'Svag',
+      varroa: '4.1%',
+      honey: '8 kg',
+      frames: '10/20',
+    },
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'excellent': return '#8FBC8F';
+      case 'good': return '#F7B801';
+      case 'warning': return '#FF8C42';
+      case 'critical': return '#E74C3C';
+      default: return '#8B7355';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'excellent': return 'Utmärkt';
+      case 'good': return 'Bra';
+      case 'warning': return 'Varning';
+      case 'critical': return 'Kritisk';
+      default: return 'Okänd';
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['#FFF8E1', '#F5F5DC']}
+        style={styles.gradient}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Mina kupor</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-hive')}>
+            <Plus size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {hives.map((hive) => (
+            <TouchableOpacity key={hive.id} style={styles.hiveCard}>
+              <View style={styles.hiveHeader}>
+                <View>
+                  <Text style={styles.hiveName}>{hive.name}</Text>
+                  <View style={styles.locationRow}>
+                    <MapPin size={14} color="#8B7355" />
+                    <Text style={styles.location}>{hive.location}</Text>
+                  </View>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(hive.status) + '20' }]}>
+                  <Text style={[styles.statusText, { color: getStatusColor(hive.status) }]}>
+                    {getStatusText(hive.status)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Activity size={16} color="#8B7355" />
+                  <Text style={styles.statLabel}>Population</Text>
+                  <Text style={styles.statValue}>{hive.population}</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <AlertTriangle size={16} color="#E74C3C" />
+                  <Text style={styles.statLabel}>Varroa</Text>
+                  <Text style={[styles.statValue, { color: parseFloat(hive.varroa) > 3 ? '#E74C3C' : '#8FBC8F' }]}>
+                    {hive.varroa}
+                  </Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Droplets size={16} color="#F7B801" />
+                  <Text style={styles.statLabel}>Honung</Text>
+                  <Text style={styles.statValue}>{hive.honey}</Text>
+                </View>
+              </View>
+
+              <View style={styles.hiveFooter}>
+                <Text style={styles.lastInspection}>
+                  Senaste inspektion: {hive.lastInspection}
+                </Text>
+                <Text style={styles.frames}>Ramar: {hive.frames}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
+            <Plus size={32} color="#8B7355" />
+            <Text style={styles.addHiveText}>Lägg till ny kupa</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#8B4513',
+  },
+  addButton: {
+    backgroundColor: '#FF8C42',
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  hiveCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  hiveHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  hiveName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 4,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  location: {
+    fontSize: 14,
+    color: '#8B7355',
+    marginLeft: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#8B4513',
+  },
+  hiveFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8D5B7',
+  },
+  lastInspection: {
+    fontSize: 12,
+    color: '#8B7355',
+  },
+  frames: {
+    fontSize: 12,
+    color: '#8B7355',
+    fontWeight: '600',
+  },
+  addHiveCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    borderStyle: 'dashed',
+  },
+  addHiveText: {
+    fontSize: 16,
+    color: '#8B7355',
+    marginTop: 8,
+    fontWeight: '600',
+  },
+});
