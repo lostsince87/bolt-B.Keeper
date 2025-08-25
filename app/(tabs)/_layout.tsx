@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import { Chrome as Home, Briefcase, FileText, ChartBar as BarChart3, Settings } from 'lucide-react-native';
+import { Chrome as Home, FileText, ChartBar as BarChart3, Settings } from 'lucide-react-native';
+import { BeehiveIcon } from '@/components/BeehiveIcon';
 
 export default function TabLayout() {
   return (
@@ -38,7 +39,7 @@ export default function TabLayout() {
         options={{
           title: 'Kupor',
           tabBarIcon: ({ color, size }) => (
-            <Briefcase size={size} color={color} />
+            <BeehiveIcon size={size} color={color} />
           ),
         }}
       />
