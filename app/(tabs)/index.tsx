@@ -27,12 +27,17 @@ export default function HomeScreen() {
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Image 
-              source={require('@/assets/images/icon.png')} 
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text style={styles.subtitle}>Välkommen tillbaka, biodlare!</Text>
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('@/assets/images/icon.png')} 
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.appName}>B.Keeper</Text>
+                <Text style={styles.subtitle}>Välkommen tillbaka, biodlare!</Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -102,12 +107,26 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 30,
+    paddingBottom: 20,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   logo: {
-    height: 150,
-    width: '100%',
-    marginBottom: 0,
+    height: 60,
+    width: 60,
+    marginRight: 16,
+  },
+  welcomeContainer: {
+    flex: 1,
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
