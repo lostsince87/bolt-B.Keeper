@@ -1,14 +1,14 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud, Snowflake, Shield } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 
 export default function AddInspectionScreen() {
   const [selectedHive, setSelectedHive] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [weather, setWeather] = useState('Soligt, 18°C'); // Auto-filled
+  const [weather, setWeather] = useState(''); // Will be auto-filled
   const [temperature, setTemperature] = useState('18');
   const [broodFrames, setBroodFrames] = useState('');
   const [totalFrames, setTotalFrames] = useState('');
@@ -19,9 +19,40 @@ export default function AddInspectionScreen() {
   const [varroaPerDay, setVarroaPerDay] = useState<number | null>(null);
   const [varroaLevel, setVarroaLevel] = useState<'lågt' | 'normalt' | 'högt' | null>(null);
   const [notes, setNotes] = useState('');
+  const [isWintering, setIsWintering] = useState(false);
+  const [winterFeed, setWinterFeed] = useState('');
+  const [isVarroaTreatment, setIsVarroaTreatment] = useState(false);
+  const [treatmentType, setTreatmentType] = useState('');
 
   const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
+  const treatmentOptions = ['Apiguard', 'Bayvarol', 'Apistan', 'Oxalsyra', 'Myrsyra', 'Annat'];
+
+  // Auto-fill weather when component mounts
+  useState(() => {
+    // Simulate getting actual weather data
+    const getWeatherData = async () => {
+      // In a real app, you would call a weather API here
+      // For now, we'll simulate different weather conditions
+      const weatherConditions = [
+        'Soligt, 18°C',
+        'Molnigt, 15°C',
+        'Lätt regn, 12°C',
+        'Delvis molnigt, 20°C',
+        'Klart, 22°C'
+      ];
+      const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+      setWeather(randomWeather);
+      
+      // Extract temperature from weather string
+      const tempMatch = randomWeather.match(/(\d+)°C/);
+      if (tempMatch) {
+        setTemperature(tempMatch[1]);
+      }
+    };
+    
+    getWeatherData();
+  });
 
   // Calculate varroa per day when count or days change
   const calculateVarroaPerDay = (count: string, days: string) => {
@@ -153,14 +184,14 @@ export default function AddInspectionScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Väder</Text>
-              <View style={[styles.inputContainer, { backgroundColor: '#F0F8E8' }]}>
+              <View style={[styles.inputContainer, { backgroundColor: weather ? '#F0F8E8' : 'white' }]}>
                 <Cloud size={20} color="#8FBC8F" />
                 <TextInput
                   style={styles.input}
                   value={weather}
                   onChangeText={setWeather}
-                  placeholder="Automatiskt registrerat"
-                  editable={false}
+                  placeholder="Hämtar väderdata..."
+                  editable={true}
                   placeholderTextColor="#8B7355"
                 />
               </View>
@@ -319,6 +350,85 @@ export default function AddInspectionScreen() {
                 </View>
               )}
             </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Specialåtgärder</Text>
+              <View style={styles.specialActionsContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.specialActionButton,
+                    isWintering && styles.specialActionButtonActive
+                  ]}
+                  onPress={() => setIsWintering(!isWintering)}
+                >
+                  <Snowflake size={20} color={isWintering ? 'white' : '#8B7355'} />
+                  <Text style={[
+                    styles.specialActionText,
+                    isWintering && styles.specialActionTextActive
+                  ]}>
+                    Invintring
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.specialActionButton,
+                    isVarroaTreatment && styles.specialActionButtonActive
+                  ]}
+                  onPress={() => setIsVarroaTreatment(!isVarroaTreatment)}
+                >
+                  <Shield size={20} color={isVarroaTreatment ? 'white' : '#8B7355'} />
+                  <Text style={[
+                    styles.specialActionText,
+                    isVarroaTreatment && styles.specialActionTextActive
+                  ]}>
+                    Varroabehandling
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {isWintering && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Vinterfoder (kg)</Text>
+                <View style={styles.inputContainer}>
+                  <Snowflake size={20} color="#8B7355" />
+                  <TextInput
+                    style={styles.input}
+                    value={winterFeed}
+                    onChangeText={setWinterFeed}
+                    placeholder="15"
+                    keyboardType="numeric"
+                    placeholderTextColor="#8B7355"
+                  />
+                </View>
+              </View>
+            )}
+
+            {isVarroaTreatment && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Typ av behandling</Text>
+                <View style={styles.treatmentSelector}>
+                  {treatmentOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      style={[
+                        styles.treatmentOption,
+                        treatmentType === option && styles.treatmentOptionSelected
+                      ]}
+                      onPress={() => setTreatmentType(option)}
+                    >
+                      <Text style={[
+                        styles.treatmentOptionText,
+                        treatmentType === option && styles.treatmentOptionTextSelected
+                      ]}>
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Anteckningar</Text>
@@ -557,5 +667,64 @@ const styles = StyleSheet.create({
   varroaLevelText: {
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  specialActionsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  specialActionButton: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  specialActionButtonActive: {
+    backgroundColor: '#8FBC8F',
+    borderColor: '#8FBC8F',
+  },
+  specialActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B7355',
+    marginLeft: 8,
+  },
+  specialActionTextActive: {
+    color: 'white',
+  },
+  treatmentSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  treatmentOption: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    marginBottom: 8,
+  },
+  treatmentOptionSelected: {
+    backgroundColor: '#F7B801',
+    borderColor: '#F7B801',
+  },
+  treatmentOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B7355',
+  },
+  treatmentOptionTextSelected: {
+    color: 'white',
   },
 });

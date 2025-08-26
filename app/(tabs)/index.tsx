@@ -81,9 +81,12 @@ export default function HomeScreen() {
                 <Briefcase size={24} color="white" />
                 <Text style={styles.actionText}>Ny inspektion</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#F7B801' }]}>
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: '#F7B801' }]}
+                onPress={() => router.push('/add-harvest')}
+              >
                 <Droplets size={24} color="white" />
-                <Text style={styles.actionText}>Registrera skörd</Text>
+                <Text style={styles.actionText}>Registrera skattning</Text>
               </TouchableOpacity>
             </View>
           </View>
