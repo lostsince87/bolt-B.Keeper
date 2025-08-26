@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, MapPin, Calendar, Crown, Scissors, Activity, Droplets, Bug, FileText, Edit, Plus } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Calendar, Crown, Scissors, Activity, Droplets, Bug, FileText, CreditCard as Edit, Plus } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 
