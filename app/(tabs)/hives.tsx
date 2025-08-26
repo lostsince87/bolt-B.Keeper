@@ -1,45 +1,106 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle } from 'lucide-react-native';
+import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { useState, useEffect } from 'react';
 
 export default function HivesScreen() {
-  const hives = [
-    {
-      id: 1,
-      name: 'Kupa Alpha',
-      location: 'Norra ängen',
-      lastInspection: '2024-01-15',
-      status: 'excellent',
-      population: 'Stark',
-      varroa: '1.2/dag',
-      honey: '25 kg',
-      frames: '18/20',
-    },
-    {
-      id: 2,
-      name: 'Kupa Beta',
-      location: 'Södra skogen',
-      lastInspection: '2024-01-12',
-      status: 'good',
-      population: 'Medel',
-      varroa: '3.2/dag',
-      honey: '18 kg',
-      frames: '14/20',
-    },
-    {
-      id: 3,
-      name: 'Kupa Gamma',
-      location: 'Östra fältet',
-      lastInspection: '2024-01-10',
-      status: 'warning',
-      population: 'Svag',
-      varroa: '6.8/dag',
-      honey: '8 kg',
-      frames: '10/20',
-    },
-  ];
+  const [hives, setHives] = useState([]);
+
+  useEffect(() => {
+    // Load hives from localStorage
+    try {
+      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
+      if (savedHives.length === 0) {
+        // Default hives if none saved
+        const defaultHives = [
+          {
+            id: 1,
+            name: 'Kupa Alpha',
+            location: 'Norra ängen',
+            lastInspection: '2024-01-15',
+            status: 'excellent',
+            population: 'Stark',
+            varroa: '1.2/dag',
+            honey: '25 kg',
+            frames: '18/20',
+            hasQueen: true,
+            queenMarked: true,
+            queenColor: 'yellow',
+            queenWingClipped: false,
+            queenAddedDate: '2024-01-01',
+          },
+          {
+            id: 2,
+            name: 'Kupa Beta',
+            location: 'Södra skogen',
+            lastInspection: '2024-01-12',
+            status: 'good',
+            population: 'Medel',
+            varroa: '3.2/dag',
+            honey: '18 kg',
+            frames: '14/20',
+            hasQueen: true,
+            queenMarked: false,
+            queenColor: null,
+            queenWingClipped: true,
+            queenAddedDate: '2023-12-15',
+          },
+          {
+            id: 3,
+            name: 'Kupa Gamma',
+            location: 'Östra fältet',
+            lastInspection: '2024-01-10',
+            status: 'warning',
+            population: 'Svag',
+            varroa: '6.8/dag',
+            honey: '8 kg',
+            frames: '10/20',
+            hasQueen: false,
+            queenMarked: null,
+            queenColor: null,
+            queenWingClipped: null,
+            queenAddedDate: null,
+          },
+        ];
+        setHives(defaultHives);
+        localStorage.setItem('hives', JSON.stringify(defaultHives));
+      } else {
+        setHives(savedHives);
+      }
+    } catch (error) {
+      console.log('Could not load hives from localStorage:', error);
+      setHives([]);
+    }
+  }, []);
+
+  const queenColors = {
+    white: '#FFFFFF',
+    yellow: '#FFD700',
+    red: '#FF0000',
+    green: '#008000',
+    blue: '#0000FF',
+  };
+
+  const calculateQueenAge = (addedDate: string) => {
+    if (!addedDate) return null;
+    const added = new Date(addedDate);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - added.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 30) {
+      return `${diffDays} dagar`;
+    } else if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `${months} månad${months > 1 ? 'er' : ''}`;
+    } else {
+      const years = Math.floor(diffDays / 365);
+      const remainingMonths = Math.floor((diffDays % 365) / 30);
+      return `${years} år${remainingMonths > 0 ? ` ${remainingMonths} mån` : ''}`;
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -83,6 +144,18 @@ export default function HivesScreen() {
                   <View style={styles.locationRow}>
                     <MapPin size={14} color="#8B7355" />
                     <Text style={styles.location}>{hive.location}</Text>
+                    {hive.hasQueen && (
+                      <View style={styles.queenInfo}>
+                        <Crown 
+                          size={14} 
+                          color={hive.queenMarked && hive.queenColor ? queenColors[hive.queenColor] : '#F7B801'} 
+                          fill={hive.queenMarked && hive.queenColor ? queenColors[hive.queenColor] : '#F7B801'}
+                        />
+                        {hive.queenWingClipped && (
+                          <Scissors size={12} color="#8B7355" style={{ marginLeft: 4 }} />
+                        )}
+                      </View>
+                    )}
                   </View>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(hive.status) + '20' }]}>
@@ -116,7 +189,14 @@ export default function HivesScreen() {
                 <Text style={styles.lastInspection}>
                   Senaste inspektion: {hive.lastInspection}
                 </Text>
-                <Text style={styles.frames}>Ramar: {hive.frames}</Text>
+                <View style={styles.footerRight}>
+                  <Text style={styles.frames}>Ramar: {hive.frames}</Text>
+                  {hive.hasQueen && hive.queenAddedDate && (
+                    <Text style={styles.queenAge}>
+                      Drottning: {calculateQueenAge(hive.queenAddedDate)}
+                    </Text>
+                  )}
+                </View>
               </View>
             </TouchableOpacity>
           ))}
@@ -200,6 +280,11 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     marginLeft: 4,
   },
+  queenInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -241,10 +326,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8B7355',
   },
+  footerRight: {
+    alignItems: 'flex-end',
+  },
   frames: {
     fontSize: 12,
     color: '#8B7355',
     fontWeight: '600',
+  },
+  queenAge: {
+    fontSize: 10,
+    color: '#8B7355',
+    marginTop: 2,
   },
   addHiveCard: {
     backgroundColor: 'white',

@@ -40,7 +40,26 @@ export default function AddTaskScreen() {
       return;
     }
 
-    // Here you would save to your database
+    // Create task object
+    const newTask = {
+      id: Date.now(),
+      task: taskTitle.trim(),
+      date: taskDate.trim(),
+      priority: selectedPriority,
+      notes: notes.trim(),
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save task to localStorage
+    try {
+      const existingTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      const updatedTasks = [...existingTasks, newTask];
+      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+    } catch (error) {
+      console.log('Could not save task:', error);
+    }
+
     Alert.alert(
       'Uppgift sparad!', 
       `"${taskTitle}" har lagts till för ${taskDate}`,

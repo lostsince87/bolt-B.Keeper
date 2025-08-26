@@ -4,24 +4,60 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
 import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BeehiveIcon } from '@/components/BeehiveIcon';
 
 export default function HomeScreen() {
   const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
   const [showStatsSelector, setShowStatsSelector] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [hives, setHives] = useState([]);
 
-  // Mock data - i riktig app skulle detta komma från databas
-  const hiveData = [
-    { id: 1, name: 'Kupa Alpha', lastInspection: { broodFrames: 8, totalFrames: 18, varroaPerDay: 1.2 } },
-    { id: 2, name: 'Kupa Beta', lastInspection: { broodFrames: 6, totalFrames: 14, varroaPerDay: 3.2 } },
-    { id: 3, name: 'Kupa Gamma', lastInspection: { broodFrames: 4, totalFrames: 10, varroaPerDay: 6.8 } },
-  ];
+  useEffect(() => {
+    // Load data from localStorage
+    try {
+      const savedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
+      
+      if (savedTasks.length === 0) {
+        // Default tasks if none saved
+        const defaultTasks = [
+          { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
+          { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
+          { id: 3, task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
+        ];
+        setTasks(defaultTasks);
+        localStorage.setItem('tasks', JSON.stringify(defaultTasks));
+      } else {
+        // Convert saved tasks to display format
+        const displayTasks = savedTasks.map(task => ({
+          ...task,
+          color: task.priority === 'hög' ? '#E74C3C' : task.priority === 'medel' ? '#F39C12' : '#8FBC8F'
+        }));
+        setTasks(displayTasks);
+      }
+
+      if (savedHives.length === 0) {
+        // Default hive data for calculations
+        const defaultHiveData = [
+          { id: 1, name: 'Kupa Alpha', lastInspection: { broodFrames: 8, totalFrames: 18, varroaPerDay: 1.2 } },
+          { id: 2, name: 'Kupa Beta', lastInspection: { broodFrames: 6, totalFrames: 14, varroaPerDay: 3.2 } },
+          { id: 3, name: 'Kupa Gamma', lastInspection: { broodFrames: 4, totalFrames: 10, varroaPerDay: 6.8 } },
+        ];
+        setHives(defaultHiveData);
+      } else {
+        setHives(savedHives);
+      }
+    } catch (error) {
+      console.log('Could not load data from localStorage:', error);
+    }
+  }, []);
 
   // Beräkna genomsnittlig population baserat på yngelramar
   const calculateAveragePopulation = () => {
-    const totalBroodFrames = hiveData.reduce((sum, hive) => sum + hive.lastInspection.broodFrames, 0);
-    const avgBroodFrames = totalBroodFrames / hiveData.length;
+    if (hives.length === 0) return 'Ingen data';
+    const totalBroodFrames = hives.reduce((sum, hive) => sum + (hive.lastInspection?.broodFrames || 0), 0);
+    const avgBroodFrames = totalBroodFrames / hives.length;
     
     // Klassificering baserat på genomsnittligt antal yngelramar
     if (avgBroodFrames >= 7) return 'Stark';
@@ -31,15 +67,16 @@ export default function HomeScreen() {
 
   // Beräkna genomsnittlig varroa
   const calculateAverageVarroa = () => {
-    const totalVarroa = hiveData.reduce((sum, hive) => sum + hive.lastInspection.varroaPerDay, 0);
-    return (totalVarroa / hiveData.length).toFixed(1);
+    if (hives.length === 0) return '0.0';
+    const totalVarroa = hives.reduce((sum, hive) => sum + (hive.lastInspection?.varroaPerDay || 0), 0);
+    return (totalVarroa / hives.length).toFixed(1);
   };
 
   const quickStats = [
     { 
       id: 'hives',
       title: 'Aktiva kupor', 
-      value: hiveData.length.toString(), 
+      value: hives.length.toString(), 
       icon: BeehiveIcon, 
       color: '#FF8C42' 
     },
@@ -74,12 +111,6 @@ export default function HomeScreen() {
   ];
 
   const availableStats = quickStats.filter(stat => selectedStats.includes(stat.id));
-
-  const [tasks, setTasks] = useState([
-    { task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
-    { task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
-    { task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
-  ]);
 
   const toggleStatSelection = (statId: string) => {
     setSelectedStats(prev => 

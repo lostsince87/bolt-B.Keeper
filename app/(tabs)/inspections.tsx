@@ -4,45 +4,63 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Plus, Search, Calendar, Thermometer, Cloud, FileText, Star } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 
 export default function InspectionsScreen() {
   const [searchText, setSearchText] = useState('');
+  const [inspections, setInspections] = useState([]);
 
-  const inspections = [
-    {
-      id: 1,
-      hive: 'Kupa Alpha',
-      date: '2024-01-15',
-      time: '14:30',
-      weather: 'Soligt, 18°C',
-      duration: '45 min',
-      rating: 5,
-      notes: 'Mycket aktiv samhälle. Drottningen sedd och märkt. God byggtakt på nya ramar.',
-      findings: ['Drottning sedd', 'Yngel i alla stadier', 'Varroa: 1.2/dag (lågt)'],
-    },
-    {
-      id: 2,
-      hive: 'Kupa Beta',
-      date: '2024-01-12',
-      time: '10:15',
-      weather: 'Molnigt, 15°C',
-      duration: '30 min',
-      rating: 4,
-      notes: 'Normalt beteende. Lite varroamiter upptäckta på botten. Planera behandling.',
-      findings: ['Varroa: 3.2/dag (normalt)', 'Honung i övre magasin', 'Behöver mer plats'],
-    },
-    {
-      id: 3,
-      hive: 'Kupa Gamma',
-      date: '2024-01-10',
-      time: '16:00',
-      weather: 'Regnigt, 12°C',
-      duration: '20 min',
-      rating: 2,
-      notes: 'Svag aktivitet. Drottningen inte sedd. Misstänker drottninglöshet.',
-      findings: ['Drottning ej sedd', 'Få bin', 'Varroa: 6.8/dag (högt)'],
-    },
-  ];
+  useEffect(() => {
+    // Load inspections from localStorage
+    try {
+      const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
+      if (savedInspections.length === 0) {
+        // Default inspections if none saved
+        const defaultInspections = [
+          {
+            id: 1,
+            hive: 'Kupa Alpha',
+            date: '2024-01-15',
+            time: '14:30',
+            weather: 'Soligt, 18°C',
+            duration: '45 min',
+            rating: 5,
+            notes: 'Mycket aktiv samhälle. Drottningen sedd och märkt. God byggtakt på nya ramar.',
+            findings: ['Drottning sedd', 'Yngel i alla stadier', 'Varroa: 1.2/dag (lågt)'],
+          },
+          {
+            id: 2,
+            hive: 'Kupa Beta',
+            date: '2024-01-12',
+            time: '10:15',
+            weather: 'Molnigt, 15°C',
+            duration: '30 min',
+            rating: 4,
+            notes: 'Normalt beteende. Lite varroamiter upptäckta på botten. Planera behandling.',
+            findings: ['Varroa: 3.2/dag (normalt)', 'Honung i övre magasin', 'Behöver mer plats'],
+          },
+          {
+            id: 3,
+            hive: 'Kupa Gamma',
+            date: '2024-01-10',
+            time: '16:00',
+            weather: 'Regnigt, 12°C',
+            duration: '20 min',
+            rating: 2,
+            notes: 'Svag aktivitet. Drottningen inte sedd. Misstänker drottninglöshet.',
+            findings: ['Drottning ej sedd', 'Få bin', 'Varroa: 6.8/dag (högt)'],
+          },
+        ];
+        setInspections(defaultInspections);
+        localStorage.setItem('inspections', JSON.stringify(defaultInspections));
+      } else {
+        setInspections(savedInspections);
+      }
+    } catch (error) {
+      console.log('Could not load inspections from localStorage:', error);
+      setInspections([]);
+    }
+  }, []);
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4) return '#8FBC8F';

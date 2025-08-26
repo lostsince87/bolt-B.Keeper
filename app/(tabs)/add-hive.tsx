@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, MapPin, Briefcase, Save } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Briefcase, Save, Crown, Scissors } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 
@@ -11,11 +11,18 @@ export default function AddHiveScreen() {
   const [frames, setFrames] = useState('20');
   const [isNucleus, setIsNucleus] = useState<boolean | null>(null);
   const [notes, setNotes] = useState('');
-  const [hives, setHives] = useState([
-    { id: 1, name: 'Kupa Alpha', location: 'Norra ängen' },
-    { id: 2, name: 'Kupa Beta', location: 'Södra skogen' },
-    { id: 3, name: 'Kupa Gamma', location: 'Östra fältet' },
-  ]);
+  const [hasQueen, setHasQueen] = useState<boolean | null>(null);
+  const [queenMarked, setQueenMarked] = useState<boolean | null>(null);
+  const [queenColor, setQueenColor] = useState('');
+  const [queenWingClipped, setQueenWingClipped] = useState<boolean | null>(null);
+
+  const queenColors = [
+    { id: 'white', name: 'Vit', color: '#FFFFFF', textColor: '#000000' },
+    { id: 'yellow', name: 'Gul', color: '#FFD700', textColor: '#000000' },
+    { id: 'red', name: 'Röd', color: '#FF0000', textColor: '#FFFFFF' },
+    { id: 'green', name: 'Grön', color: '#008000', textColor: '#FFFFFF' },
+    { id: 'blue', name: 'Blå', color: '#0000FF', textColor: '#FFFFFF' },
+  ];
 
   const handleSave = () => {
     if (!hiveName.trim()) {
@@ -29,27 +36,64 @@ export default function AddHiveScreen() {
 
     const frameCount = parseInt(frames);
     if (frameCount <= 10 && isNucleus === null) {
-      Alert.alert('Fråga', 'Är detta en avläggare?');
+      Alert.alert('Fel', 'Ange om detta är en avläggare');
+      return;
+    }
+    if (hasQueen === null) {
+      Alert.alert('Fel', 'Ange om drottning finns');
+      return;
+    }
+    if (hasQueen && queenMarked === null) {
+      Alert.alert('Fel', 'Ange om drottningen är märkt');
+      return;
+    }
+    if (hasQueen && queenMarked && !queenColor) {
+      Alert.alert('Fel', 'Välj färg på drottningens märkning');
+      return;
+    }
+    if (hasQueen && queenWingClipped === null) {
+      Alert.alert('Fel', 'Ange om drottningen är vingklippt');
       return;
     }
 
-    // Create new hive object
+    // Create new hive object with queen data
+    const queenData = hasQueen ? {
+      hasQueen: true,
+      queenMarked,
+      queenColor: queenMarked ? queenColor : null,
+      queenWingClipped,
+      queenAddedDate: new Date().toISOString(),
+    } : {
+      hasQueen: false,
+      queenMarked: null,
+      queenColor: null,
+      queenWingClipped: null,
+      queenAddedDate: null,
+    };
+
     const newHive = {
-      id: hives.length + 1,
+      id: Date.now(), // Simple ID generation
       name: hiveName.trim(),
       location: location.trim(),
       frames: frameCount,
       isNucleus: frameCount <= 10 ? isNucleus : false,
       notes: notes.trim(),
       createdAt: new Date().toISOString(),
+      ...queenData,
     };
 
-    // Add to hives list (in real app, save to database)
-    setHives([...hives, newHive]);
+    // Save to localStorage (in real app, save to database)
+    try {
+      const existingHives = JSON.parse(localStorage.getItem('hives') || '[]');
+      const updatedHives = [...existingHives, newHive];
+      localStorage.setItem('hives', JSON.stringify(updatedHives));
+    } catch (error) {
+      console.log('Could not save to localStorage:', error);
+    }
 
     Alert.alert(
       'Kupa sparad!', 
-      `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}`,
+      `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}${hasQueen ? ' med drottning' : ''}`,
       [{ text: 'OK', onPress: () => router.back() }]
     );
   };
@@ -146,6 +190,137 @@ export default function AddHiveScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
+            )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Drottning finns *</Text>
+              <View style={styles.queenSelector}>
+                <TouchableOpacity
+                  style={[
+                    styles.queenOption,
+                    hasQueen === true && styles.queenOptionSelected
+                  ]}
+                  onPress={() => setHasQueen(true)}
+                >
+                  <Crown size={20} color={hasQueen === true ? 'white' : '#8B7355'} />
+                  <Text style={[
+                    styles.queenOptionText,
+                    hasQueen === true && styles.queenOptionTextSelected
+                  ]}>
+                    Ja
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.queenOption,
+                    hasQueen === false && styles.queenOptionSelected
+                  ]}
+                  onPress={() => setHasQueen(false)}
+                >
+                  <Text style={[
+                    styles.queenOptionText,
+                    hasQueen === false && styles.queenOptionTextSelected
+                  ]}>
+                    Nej
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {hasQueen && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Drottning märkt *</Text>
+                  <View style={styles.queenSelector}>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        queenMarked === true && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setQueenMarked(true)}
+                    >
+                      <Text style={[
+                        styles.queenOptionText,
+                        queenMarked === true && styles.queenOptionTextSelected
+                      ]}>
+                        Ja
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        queenMarked === false && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setQueenMarked(false)}
+                    >
+                      <Text style={[
+                        styles.queenOptionText,
+                        queenMarked === false && styles.queenOptionTextSelected
+                      ]}>
+                        Nej
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {queenMarked && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Märkningsfärg *</Text>
+                    <View style={styles.colorSelector}>
+                      {queenColors.map((color) => (
+                        <TouchableOpacity
+                          key={color.id}
+                          style={[
+                            styles.colorOption,
+                            { backgroundColor: color.color },
+                            queenColor === color.id && styles.colorOptionSelected
+                          ]}
+                          onPress={() => setQueenColor(color.id)}
+                        >
+                          <Text style={[styles.colorText, { color: color.textColor }]}>
+                            {color.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Drottning vingklippt *</Text>
+                  <View style={styles.queenSelector}>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        queenWingClipped === true && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setQueenWingClipped(true)}
+                    >
+                      <Scissors size={20} color={queenWingClipped === true ? 'white' : '#8B7355'} />
+                      <Text style={[
+                        styles.queenOptionText,
+                        queenWingClipped === true && styles.queenOptionTextSelected
+                      ]}>
+                        Ja
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        queenWingClipped === false && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setQueenWingClipped(false)}
+                    >
+                      <Text style={[
+                        styles.queenOptionText,
+                        queenWingClipped === false && styles.queenOptionTextSelected
+                      ]}>
+                        Nej
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
             )}
 
             <View style={styles.inputGroup}>
@@ -307,5 +482,62 @@ const styles = StyleSheet.create({
   },
   nucleusOptionTextSelected: {
     color: 'white',
+  },
+  queenSelector: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  queenOption: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  queenOptionSelected: {
+    backgroundColor: '#F7B801',
+    borderColor: '#F7B801',
+  },
+  queenOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8B7355',
+    marginLeft: 8,
+  },
+  queenOptionTextSelected: {
+    color: 'white',
+  },
+  colorSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  colorOption: {
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 3,
+    borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  colorOptionSelected: {
+    borderColor: '#8B4513',
+  },
+  colorText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

@@ -23,10 +23,21 @@ export default function AddInspectionScreen() {
   const [winterFeed, setWinterFeed] = useState('');
   const [isVarroaTreatment, setIsVarroaTreatment] = useState(false);
   const [treatmentType, setTreatmentType] = useState('');
+  const [newQueenAdded, setNewQueenAdded] = useState(false);
+  const [newQueenMarked, setNewQueenMarked] = useState<boolean | null>(null);
+  const [newQueenColor, setNewQueenColor] = useState('');
+  const [newQueenWingClipped, setNewQueenWingClipped] = useState<boolean | null>(null);
 
   const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
   const treatmentOptions = ['Apiguard', 'Bayvarol', 'Apistan', 'Oxalsyra', 'Myrsyra', 'Annat'];
+  const queenColors = [
+    { id: 'white', name: 'Vit', color: '#FFFFFF', textColor: '#000000' },
+    { id: 'yellow', name: 'Gul', color: '#FFD700', textColor: '#000000' },
+    { id: 'red', name: 'Röd', color: '#FF0000', textColor: '#FFFFFF' },
+    { id: 'green', name: 'Grön', color: '#008000', textColor: '#FFFFFF' },
+    { id: 'blue', name: 'Blå', color: '#0000FF', textColor: '#FFFFFF' },
+  ];
 
   // Auto-fill weather when component mounts
   useState(() => {
@@ -105,10 +116,64 @@ export default function AddInspectionScreen() {
       return;
     }
 
-    // Here you would save to your database
+    // Create inspection object
+    const newInspection = {
+      id: Date.now(),
+      hive: selectedHive,
+      date,
+      weather,
+      temperature: parseFloat(temperature),
+      broodFrames: parseInt(broodFrames),
+      totalFrames: parseInt(totalFrames),
+      queenSeen,
+      temperament,
+      varroaCount: varroaCount ? parseFloat(varroaCount) : null,
+      varroaDays: varroaDays ? parseFloat(varroaDays) : null,
+      varroaPerDay,
+      varroaLevel,
+      notes: notes.trim(),
+      isWintering,
+      winterFeed: winterFeed ? parseFloat(winterFeed) : null,
+      isVarroaTreatment,
+      treatmentType: treatmentType || null,
+      newQueenAdded,
+      newQueenMarked: newQueenAdded ? newQueenMarked : null,
+      newQueenColor: newQueenAdded && newQueenMarked ? newQueenColor : null,
+      newQueenWingClipped: newQueenAdded ? newQueenWingClipped : null,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save inspection to localStorage
+    try {
+      const existingInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
+      const updatedInspections = [...existingInspections, newInspection];
+      localStorage.setItem('inspections', JSON.stringify(updatedInspections));
+
+      // If new queen was added, update the hive data
+      if (newQueenAdded) {
+        const existingHives = JSON.parse(localStorage.getItem('hives') || '[]');
+        const updatedHives = existingHives.map(hive => {
+          if (hive.name === selectedHive) {
+            return {
+              ...hive,
+              hasQueen: true,
+              queenMarked: newQueenMarked,
+              queenColor: newQueenMarked ? newQueenColor : null,
+              queenWingClipped: newQueenWingClipped,
+              queenAddedDate: new Date().toISOString(),
+            };
+          }
+          return hive;
+        });
+        localStorage.setItem('hives', JSON.stringify(updatedHives));
+      }
+    } catch (error) {
+      console.log('Could not save inspection:', error);
+    }
+
     Alert.alert(
       'Inspektion sparad!', 
-      `Inspektion av ${selectedHive} har registrerats`,
+      `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
       [{ text: 'OK', onPress: () => router.back() }]
     );
   };
@@ -385,6 +450,22 @@ export default function AddInspectionScreen() {
                     Varroabehandling
                   </Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.specialActionButton,
+                    newQueenAdded && styles.specialActionButtonActive
+                  ]}
+                  onPress={() => setNewQueenAdded(!newQueenAdded)}
+                >
+                  <Crown size={20} color={newQueenAdded ? 'white' : '#8B7355'} />
+                  <Text style={[
+                    styles.specialActionText,
+                    newQueenAdded && styles.specialActionTextActive
+                  ]}>
+                    Ny drottning
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -428,6 +509,102 @@ export default function AddInspectionScreen() {
                   ))}
                 </View>
               </View>
+            )}
+
+            {newQueenAdded && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Ny drottning märkt</Text>
+                  <View style={styles.queenSelector}>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        newQueenMarked === true && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setNewQueenMarked(true)}
+                    >
+                      <Text style={[
+                        styles.queenOptionText,
+                        newQueenMarked === true && styles.queenOptionTextSelected
+                      ]}>
+                        Ja
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        newQueenMarked === false && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setNewQueenMarked(false)}
+                    >
+                      <Text style={[
+                        styles.queenOptionText,
+                        newQueenMarked === false && styles.queenOptionTextSelected
+                      ]}>
+                        Nej
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {newQueenMarked && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Märkningsfärg</Text>
+                    <View style={styles.colorSelector}>
+                      {queenColors.map((color) => (
+                        <TouchableOpacity
+                          key={color.id}
+                          style={[
+                            styles.colorOption,
+                            { backgroundColor: color.color },
+                            newQueenColor === color.id && styles.colorOptionSelected
+                          ]}
+                          onPress={() => setNewQueenColor(color.id)}
+                        >
+                          <Text style={[styles.colorText, { color: color.textColor }]}>
+                            {color.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Ny drottning vingklippt</Text>
+                  <View style={styles.queenSelector}>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        newQueenWingClipped === true && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setNewQueenWingClipped(true)}
+                    >
+                      <Scissors size={20} color={newQueenWingClipped === true ? 'white' : '#8B7355'} />
+                      <Text style={[
+                        styles.queenOptionText,
+                        newQueenWingClipped === true && styles.queenOptionTextSelected
+                      ]}>
+                        Ja
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.queenOption,
+                        newQueenWingClipped === false && styles.queenOptionSelected
+                      ]}
+                      onPress={() => setNewQueenWingClipped(false)}
+                    >
+                      <Text style={[
+                        styles.queenOptionText,
+                        newQueenWingClipped === false && styles.queenOptionTextSelected
+                      ]}>
+                        Nej
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
             )}
 
             <View style={styles.inputGroup}>
@@ -726,5 +903,57 @@ const styles = StyleSheet.create({
   },
   treatmentOptionTextSelected: {
     color: 'white',
+  },
+  queenSelector: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  queenOption: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+  },
+  queenOptionSelected: {
+    backgroundColor: '#F7B801',
+    borderColor: '#F7B801',
+  },
+  queenOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B7355',
+    marginLeft: 8,
+  },
+  queenOptionTextSelected: {
+    color: 'white',
+  },
+  colorSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  colorOption: {
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 3,
+    borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  colorOptionSelected: {
+    borderColor: '#8B4513',
+  },
+  colorText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
