@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors } from 'lucide-react-native';
+import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 
 export default function HivesScreen() {
   const [hives, setHives] = useState([]);
@@ -122,6 +123,38 @@ export default function HivesScreen() {
     }
   };
 
+  const handleDeleteHive = (hiveId: number, hiveName: string) => {
+    Alert.alert(
+      'Radera kupa',
+      `Är du säker på att du vill radera ${hiveName}? Detta kan inte ångras.`,
+      [
+        {
+          text: 'Avbryt',
+          style: 'cancel',
+        },
+        {
+          text: 'Radera',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              const updatedHives = hives.filter(hive => hive.id !== hiveId);
+              setHives(updatedHives);
+              localStorage.setItem('hives', JSON.stringify(updatedHives));
+              
+              // Also remove related inspections
+              const existingInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
+              const updatedInspections = existingInspections.filter(inspection => inspection.hive !== hiveName);
+              localStorage.setItem('inspections', JSON.stringify(updatedInspections));
+              
+            } catch (error) {
+              console.log('Could not delete hive:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -137,7 +170,14 @@ export default function HivesScreen() {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {hives.map((hive) => (
-            <TouchableOpacity key={hive.id} style={styles.hiveCard}>
+            <View key={hive.id} style={styles.hiveCard}>
+              <TouchableOpacity 
+                style={styles.deleteButton}
+                onPress={() => handleDeleteHive(hive.id, hive.name)}
+              >
+                <Trash2 size={16} color="#E74C3C" />
+              </TouchableOpacity>
+              
               <View style={styles.hiveHeader}>
                 <View>
                   <Text style={styles.hiveName}>{hive.name}</Text>
@@ -198,7 +238,7 @@ export default function HivesScreen() {
                   )}
                 </View>
               </View>
-            </TouchableOpacity>
+            </View>
           ))}
 
           <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
@@ -253,11 +293,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#FFE5E5',
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   hiveHeader: {
     flexDirection: 'row',
