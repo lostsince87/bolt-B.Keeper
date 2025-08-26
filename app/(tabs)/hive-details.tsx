@@ -95,11 +95,15 @@ export default function HiveDetailsScreen() {
     });
   };
 
+  const handleBack = () => {
+    router.push('/hives');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#FFF8E1', '#F5F5DC']} style={styles.gradient}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <ArrowLeft size={24} color="#8B4513" />
           </TouchableOpacity>
           <Text style={styles.title}>{hive.name}</Text>
