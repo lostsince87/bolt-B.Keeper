@@ -6,8 +6,20 @@ import { useState } from 'react';
 
 export default function StatisticsScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('år');
+  const [inspections, setInspections] = useState([]);
 
-  const periods = ['månad', 'kvartal', 'år'];
+  const periods = ['månad', 'år'];
+
+  useEffect(() => {
+    // Load inspections from localStorage
+    try {
+      const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
+      setInspections(savedInspections);
+    } catch (error) {
+      console.log('Could not load inspections:', error);
+      setInspections([]);
+    }
+  }, []);
 
   const yearlyStats = {
     totalHoney: 145,
@@ -31,20 +43,59 @@ export default function StatisticsScreen() {
     { month: 'Dec', amount: 0 },
   ];
 
-  const varroaTrend = [
-    { month: 'Jan', level: 1.8 },
-    { month: 'Feb', level: 2.1 },
-    { month: 'Mar', level: 2.5 },
-    { month: 'Apr', level: 2.0 },
-    { month: 'Maj', level: 1.5 },
-    { month: 'Jun', level: 2.8 },
-    { month: 'Jul', level: 5.2 },
-    { month: 'Aug', level: 4.1 },
-    { month: 'Sep', level: 3.9 },
-    { month: 'Okt', level: 4.3 },
-    { month: 'Nov', level: 6.7 },
-    { month: 'Dec', level: 5.5 },
-  ];
+  // Calculate varroa trend from actual inspection data
+  const calculateVarroaTrend = () => {
+    const currentYear = new Date().getFullYear();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+    
+    if (selectedPeriod === 'månad') {
+      // Show last 12 months
+      const monthlyData = [];
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        const monthInspections = inspections.filter(inspection => {
+          const inspectionDate = new Date(inspection.date);
+          const inspectionKey = `${inspectionDate.getFullYear()}-${String(inspectionDate.getMonth() + 1).padStart(2, '0')}`;
+          return inspectionKey === monthKey && inspection.varroaPerDay !== null;
+        });
+        
+        const avgVarroa = monthInspections.length > 0 
+          ? monthInspections.reduce((sum, inspection) => sum + inspection.varroaPerDay, 0) / monthInspections.length
+          : 0;
+        
+        monthlyData.push({
+          month: months[date.getMonth()],
+          level: avgVarroa,
+          year: date.getFullYear()
+        });
+      }
+      return monthlyData;
+    } else {
+      // Show current year by month
+      return months.map((month, index) => {
+        const monthInspections = inspections.filter(inspection => {
+          const inspectionDate = new Date(inspection.date);
+          return inspectionDate.getFullYear() === currentYear && 
+                 inspectionDate.getMonth() === index && 
+                 inspection.varroaPerDay !== null;
+        });
+        
+        const avgVarroa = monthInspections.length > 0 
+          ? monthInspections.reduce((sum, inspection) => sum + inspection.varroaPerDay, 0) / monthInspections.length
+          : 0;
+        
+        return {
+          month,
+          level: avgVarroa
+        };
+      });
+    }
+  };
+
+  const varroaTrend = calculateVarroaTrend();
 
   const maxHoney = Math.max(...monthlyHoney.map(m => m.amount));
   const maxVarroa = Math.max(...varroaTrend.map(v => v.level));
@@ -131,7 +182,9 @@ export default function StatisticsScreen() {
           </View>
 
           <View style={styles.chartContainer}>
-            <Text style={styles.chartTitle}>Varroa per dag trend</Text>
+            <Text style={styles.chartTitle}>
+              Varroa per dag trend {selectedPeriod === 'månad' ? '(senaste 12 månaderna)' : '(i år)'}
+            </Text>
             <View style={styles.chart}>
               {varroaTrend.map((month, index) => (
                 <View key={index} style={styles.barContainer}>
@@ -140,18 +193,23 @@ export default function StatisticsScreen() {
                       style={[
                         styles.bar,
                         { 
-                          height: (month.level / maxVarroa) * 120,
+                          height: Math.max((month.level / Math.max(maxVarroa, 1)) * 120, 2),
                           backgroundColor: month.level > 5 ? '#E74C3C' : month.level > 2 ? '#FF8C42' : '#8FBC8F'
                         }
                       ]} 
                     />
                   </View>
-                  <Text style={styles.barLabel}>{month.month}</Text>
+                  <Text style={styles.barLabel}>
+                    {selectedPeriod === 'månad' && month.year !== new Date().getFullYear() 
+                      ? `${month.month} ${month.year.toString().slice(-2)}` 
+                      : month.month
+                    }
+                  </Text>
                   <Text style={[
                     styles.barValue,
                     { color: month.level > 5 ? '#E74C3C' : '#8B7355' }
                   ]}>
-                    {month.level}
+                    {month.level > 0 ? month.level.toFixed(1) : '0'}
                   </Text>
                 </View>
               ))}
@@ -180,7 +238,14 @@ export default function StatisticsScreen() {
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>Övervaka varroa</Text>
                 <Text style={styles.insightText}>
-                  Kupa Gamma visar 6.8 varroa/dag (högt). Planera behandling omedelbart.
+                  {(() => {
+                    const highVarroaInspections = inspections.filter(i => i.varroaPerDay > 5);
+                    if (highVarroaInspections.length > 0) {
+                      const latestHigh = highVarroaInspections.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                      return `${latestHigh.hive} visar ${latestHigh.varroaPerDay.toFixed(1)} varroa/dag (högt). Planera behandling omedelbart.`;
+                    }
+                    return 'Varroavärden ser bra ut. Fortsätt med regelbunden övervakning.';
+                  })()}
                 </Text>
               </View>
             </View>
