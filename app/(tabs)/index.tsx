@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 100,
     paddingBottom: 30,
   },
   logo: {
