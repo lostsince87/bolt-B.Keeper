@@ -1,13 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Briefcase } from 'lucide-react-native';
-import { BeehiveIcon } from '@/components/BeehiveIcon';
+import { Image } from 'react-native';
+import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar } from 'lucide-react-native';
 import { router } from 'expo-router';
 
 export default function HomeScreen() {
   const quickStats = [
-    { title: 'Aktiva kupor', value: '12', icon: BeehiveIcon, color: '#FF8C42' },
+    { title: 'Aktiva kupor', value: '12', icon: Briefcase, color: '#FF8C42' },
     { title: 'Inspektioner denna månad', value: '8', icon: FileText, color: '#8FBC8F' },
     { title: 'Honungsskörd i år', value: '145 kg', icon: Droplets, color: '#F7B801' },
     { title: 'Snitt varroagrad', value: '2.3%', icon: TrendingUp, color: '#E74C3C' },
@@ -27,7 +27,11 @@ export default function HomeScreen() {
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Text style={styles.title}>B.Keeper</Text>
+            <Image 
+              source={require('@/assets/images/bkeep logo 2.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.subtitle}>Välkommen tillbaka, biodlare!</Text>
           </View>
 
@@ -100,10 +104,9 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#8B4513',
+  logo: {
+    height: 60,
+    width: '100%',
     marginBottom: 5,
   },
   subtitle: {

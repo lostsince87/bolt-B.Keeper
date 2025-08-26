@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import { Chrome as Home, FileText, ChartBar as BarChart3, Settings } from 'lucide-react-native';
+import { Chrome as Home, Briefcase, FileText, ChartBar as BarChart3, Settings } from 'lucide-react-native';
 import { BeehiveIcon } from '@/components/BeehiveIcon';
 
 export default function TabLayout() {
