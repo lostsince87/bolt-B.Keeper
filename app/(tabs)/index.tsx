@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   logo: {
-    height: 160,
+    height: 150,
     width: 160,
   },
   section: {
