@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   logoContainer: {
     flexDirection: 'row',
