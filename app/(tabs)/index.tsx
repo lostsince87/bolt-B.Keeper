@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingTop: 0,
     paddingBottom: 0,
   },
