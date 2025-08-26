@@ -28,7 +28,7 @@ export default function HomeScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Image 
-              source={require('@/assets/images/bkeep logo 2.png')} 
+              source={require('@/assets/images/icon.png')} 
               style={styles.logo}
               resizeMode="contain"
             />
