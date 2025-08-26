@@ -9,7 +9,13 @@ export default function AddHiveScreen() {
   const [hiveName, setHiveName] = useState('');
   const [location, setLocation] = useState('');
   const [frames, setFrames] = useState('20');
+  const [isNucleus, setIsNucleus] = useState<boolean | null>(null);
   const [notes, setNotes] = useState('');
+  const [hives, setHives] = useState([
+    { id: 1, name: 'Kupa Alpha', location: 'Norra ängen' },
+    { id: 2, name: 'Kupa Beta', location: 'Södra skogen' },
+    { id: 3, name: 'Kupa Gamma', location: 'Östra fältet' },
+  ]);
 
   const handleSave = () => {
     if (!hiveName.trim()) {
@@ -21,10 +27,29 @@ export default function AddHiveScreen() {
       return;
     }
 
-    // Here you would save to your database
+    const frameCount = parseInt(frames);
+    if (frameCount <= 10 && isNucleus === null) {
+      Alert.alert('Fråga', 'Är detta en avläggare?');
+      return;
+    }
+
+    // Create new hive object
+    const newHive = {
+      id: hives.length + 1,
+      name: hiveName.trim(),
+      location: location.trim(),
+      frames: frameCount,
+      isNucleus: frameCount <= 10 ? isNucleus : false,
+      notes: notes.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add to hives list (in real app, save to database)
+    setHives([...hives, newHive]);
+
     Alert.alert(
       'Kupa sparad!', 
-      `${hiveName} har lagts till på ${location}`,
+      `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}`,
       [{ text: 'OK', onPress: () => router.back() }]
     );
   };
@@ -86,6 +111,42 @@ export default function AddHiveScreen() {
                 />
               </View>
             </View>
+
+            {parseInt(frames) <= 10 && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Är detta en avläggare?</Text>
+                <View style={styles.nucleusSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.nucleusOption,
+                      isNucleus === true && styles.nucleusOptionSelected
+                    ]}
+                    onPress={() => setIsNucleus(true)}
+                  >
+                    <Text style={[
+                      styles.nucleusOptionText,
+                      isNucleus === true && styles.nucleusOptionTextSelected
+                    ]}>
+                      Ja
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.nucleusOption,
+                      isNucleus === false && styles.nucleusOptionSelected
+                    ]}
+                    onPress={() => setIsNucleus(false)}
+                  >
+                    <Text style={[
+                      styles.nucleusOptionText,
+                      isNucleus === false && styles.nucleusOptionTextSelected
+                    ]}>
+                      Nej
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Anteckningar</Text>
@@ -215,5 +276,36 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  nucleusSelector: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  nucleusOption: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  nucleusOptionSelected: {
+    backgroundColor: '#8FBC8F',
+    borderColor: '#8FBC8F',
+  },
+  nucleusOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8B7355',
+  },
+  nucleusOptionTextSelected: {
+    color: 'white',
   },
 });
