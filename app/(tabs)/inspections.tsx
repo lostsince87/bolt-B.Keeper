@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, Search, Calendar, Thermometer, Cloud, FileText, Star } from 'lucide-react-native';
+import { Plus, Search, Calendar, Cloud, FileText, Star, MapPin, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
@@ -9,11 +9,18 @@ import { useEffect } from 'react';
 export default function InspectionsScreen() {
   const [searchText, setSearchText] = useState('');
   const [inspections, setInspections] = useState([]);
+  const [hives, setHives] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedHive, setSelectedHive] = useState('');
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showHivePicker, setShowHivePicker] = useState(false);
 
   useEffect(() => {
-    // Load inspections from localStorage
+    // Load inspections and hives from localStorage
     try {
       const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
+      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
+      
       if (savedInspections.length === 0) {
         // Default inspections if none saved
         const defaultInspections = [
@@ -56,11 +63,33 @@ export default function InspectionsScreen() {
       } else {
         setInspections(savedInspections);
       }
+      
+      setHives(savedHives);
     } catch (error) {
       console.log('Could not load inspections from localStorage:', error);
       setInspections([]);
     }
   }, []);
+
+  // Get unique locations from hives
+  const locations = [...new Set(hives.map(hive => hive.location))];
+  
+  // Get hives for selected location
+  const hivesInLocation = selectedLocation 
+    ? hives.filter(hive => hive.location === selectedLocation)
+    : [];
+  
+  // Filter inspections based on selected hive
+  const filteredInspections = selectedHive 
+    ? inspections.filter(inspection => inspection.hive === selectedHive)
+    : inspections;
+
+  const handleInspectionPress = (inspection) => {
+    router.push({
+      pathname: '/inspection-details',
+      params: { inspectionId: inspection.id }
+    });
+  };
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4) return '#8FBC8F';
@@ -92,22 +121,105 @@ export default function InspectionsScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Search size={20} color="#8B7355" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Sök inspektioner..."
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor="#8B7355"
-            />
+        <View style={styles.filtersContainer}>
+          <View style={styles.filterRow}>
+            <TouchableOpacity 
+              style={[styles.filterButton, selectedLocation && styles.filterButtonActive]}
+              onPress={() => setShowLocationPicker(!showLocationPicker)}
+            >
+              <MapPin size={16} color={selectedLocation ? 'white' : '#8B7355'} />
+              <Text style={[styles.filterText, selectedLocation && styles.filterTextActive]}>
+                {selectedLocation || 'Välj plats'}
+              </Text>
+              <ChevronDown size={16} color={selectedLocation ? 'white' : '#8B7355'} />
+            </TouchableOpacity>
+            
+            {selectedLocation && (
+              <TouchableOpacity 
+                style={[styles.filterButton, selectedHive && styles.filterButtonActive]}
+                onPress={() => setShowHivePicker(!showHivePicker)}
+              >
+                <Text style={[styles.filterText, selectedHive && styles.filterTextActive]}>
+                  {selectedHive || 'Välj kupa'}
+                </Text>
+                <ChevronDown size={16} color={selectedHive ? 'white' : '#8B7355'} />
+              </TouchableOpacity>
+            )}
           </View>
+          
+          {showLocationPicker && (
+            <View style={styles.pickerContainer}>
+              <TouchableOpacity 
+                style={styles.pickerOption}
+                onPress={() => {
+                  setSelectedLocation('');
+                  setSelectedHive('');
+                  setShowLocationPicker(false);
+                }}
+              >
+                <Text style={styles.pickerOptionText}>Alla platser</Text>
+              </TouchableOpacity>
+              {locations.map((location) => (
+                <TouchableOpacity
+                  key={location}
+                  style={styles.pickerOption}
+                  onPress={() => {
+                    setSelectedLocation(location);
+                    setSelectedHive('');
+                    setShowLocationPicker(false);
+                  }}
+                >
+                  <Text style={styles.pickerOptionText}>{location}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          
+          {showHivePicker && selectedLocation && (
+            <View style={styles.pickerContainer}>
+              <TouchableOpacity 
+                style={styles.pickerOption}
+                onPress={() => {
+                  setSelectedHive('');
+                  setShowHivePicker(false);
+                }}
+              >
+                <Text style={styles.pickerOptionText}>Alla kupor</Text>
+              </TouchableOpacity>
+              {hivesInLocation.map((hive) => (
+                <TouchableOpacity
+                  key={hive.id}
+                  style={styles.pickerOption}
+                  onPress={() => {
+                    setSelectedHive(hive.name);
+                    setShowHivePicker(false);
+                  }}
+                >
+                  <Text style={styles.pickerOptionText}>{hive.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {inspections.map((inspection) => (
-            <TouchableOpacity key={inspection.id} style={styles.inspectionCard}>
+          {filteredInspections.length === 0 ? (
+            <View style={styles.noInspections}>
+              <FileText size={32} color="#8B7355" />
+              <Text style={styles.noInspectionsText}>
+                {selectedHive 
+                  ? `Inga inspektioner för ${selectedHive}`
+                  : 'Inga inspektioner hittades'
+                }
+              </Text>
+            </View>
+          ) : (
+            filteredInspections.map((inspection) => (
+            <TouchableOpacity 
+              key={inspection.id} 
+              style={styles.inspectionCard}
+              onPress={() => handleInspectionPress(inspection)}
+            >
               <View style={styles.inspectionHeader}>
                 <View>
                   <Text style={styles.hiveName}>{inspection.hive}</Text>
@@ -150,7 +262,8 @@ export default function InspectionsScreen() {
                 <Text style={styles.notes}>{inspection.notes}</Text>
               </View>
             </TouchableOpacity>
-          ))}
+          ))
+          )}
 
           <TouchableOpacity style={styles.addInspectionCard} onPress={() => router.push('/add-inspection')}>
             <Plus size={32} color="#8B7355" />
@@ -195,13 +308,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  searchContainer: {
+  filtersContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  searchBar: {
+  filterRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  filterButton: {
     backgroundColor: 'white',
-    borderRadius: 25,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -212,10 +329,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
+  filterButtonActive: {
+    backgroundColor: '#F7B801',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B4513',
+    marginHorizontal: 8,
+  },
+  filterTextActive: {
+    color: 'white',
+  },
+  pickerContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  pickerOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  pickerOptionText: {
+    fontSize: 14,
     color: '#8B4513',
   },
   scrollView: {
@@ -348,5 +491,23 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     marginTop: 8,
     fontWeight: '600',
+  },
+  noInspections: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  noInspectionsText: {
+    fontSize: 16,
+    color: '#8B7355',
+    marginTop: 12,
+    textAlign: 'center',
   },
 });

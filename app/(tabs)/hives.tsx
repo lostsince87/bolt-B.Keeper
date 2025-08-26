@@ -170,7 +170,14 @@ export default function HivesScreen() {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {hives.map((hive) => (
-            <View key={hive.id} style={styles.hiveCard}>
+            <TouchableOpacity 
+              key={hive.id} 
+              style={styles.hiveCard}
+              onPress={() => router.push({
+                pathname: '/hive-details',
+                params: { hiveId: hive.id }
+              })}
+            >
               <TouchableOpacity 
                 style={styles.deleteButton}
                 onPress={() => handleDeleteHive(hive.id, hive.name)}
@@ -238,7 +245,7 @@ export default function HivesScreen() {
                   )}
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
 
           <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
