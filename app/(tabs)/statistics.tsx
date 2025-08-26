@@ -5,10 +5,7 @@ import { ChartBar as BarChart3, TrendingUp, TrendingDown, Droplets, Bug, Calenda
 import { useState, useEffect } from 'react';
 
 export default function StatisticsScreen() {
-  const [selectedPeriod, setSelectedPeriod] = useState('år');
   const [inspections, setInspections] = useState([]);
-
-  const periods = ['månad', 'år'];
 
   useEffect(() => {
     // Load inspections from localStorage
@@ -28,73 +25,60 @@ export default function StatisticsScreen() {
     activeHives: 12,
   };
 
-  const monthlyHoney = [
-    { month: 'Jan', amount: 0 },
-    { month: 'Feb', amount: 0 },
-    { month: 'Mar', amount: 5 },
-    { month: 'Apr', amount: 12 },
-    { month: 'Maj', amount: 28 },
-    { month: 'Jun', amount: 45 },
-    { month: 'Jul', amount: 35 },
-    { month: 'Aug', amount: 15 },
-    { month: 'Sep', amount: 5 },
-    { month: 'Okt', amount: 0 },
-    { month: 'Nov', amount: 0 },
-    { month: 'Dec', amount: 0 },
-  ];
-
-  // Calculate varroa trend from actual inspection data
-  const calculateVarroaTrend = () => {
-    const currentYear = new Date().getFullYear();
+  // Calculate honey harvest for last 12 months
+  const calculateMonthlyHoney = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+    const monthlyData = [];
     
-    if (selectedPeriod === 'månad') {
-      // Show last 12 months
-      const monthlyData = [];
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
-        const monthInspections = inspections.filter(inspection => {
-          const inspectionDate = new Date(inspection.date);
-          const inspectionKey = `${inspectionDate.getFullYear()}-${String(inspectionDate.getMonth() + 1).padStart(2, '0')}`;
-          return inspectionKey === monthKey && inspection.varroaPerDay !== null;
-        });
-        
-        const avgVarroa = monthInspections.length > 0 
-          ? monthInspections.reduce((sum, inspection) => sum + inspection.varroaPerDay, 0) / monthInspections.length
-          : 0;
-        
-        monthlyData.push({
-          month: months[date.getMonth()],
-          level: avgVarroa,
-          year: date.getFullYear()
-        });
-      }
-      return monthlyData;
-    } else {
-      // Show current year by month
-      return months.map((month, index) => {
-        const monthInspections = inspections.filter(inspection => {
-          const inspectionDate = new Date(inspection.date);
-          return inspectionDate.getFullYear() === currentYear && 
-                 inspectionDate.getMonth() === index && 
-                 inspection.varroaPerDay !== null;
-        });
-        
-        const avgVarroa = monthInspections.length > 0 
-          ? monthInspections.reduce((sum, inspection) => sum + inspection.varroaPerDay, 0) / monthInspections.length
-          : 0;
-        
-        return {
-          month,
-          level: avgVarroa
-        };
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      // For now, use simulated data - in real app this would come from harvest records
+      const currentMonth = date.getMonth();
+      const simulatedAmounts = [0, 0, 5, 12, 28, 45, 35, 15, 5, 0, 0, 0];
+      const amount = simulatedAmounts[currentMonth] || 0;
+      
+      monthlyData.push({
+        month: months[date.getMonth()],
+        amount,
+        year: date.getFullYear()
       });
     }
+    return monthlyData;
   };
 
+  // Calculate varroa trend for last 12 months from actual inspection data
+  const calculateVarroaTrend = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+    const monthlyData = [];
+    
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      const monthInspections = inspections.filter(inspection => {
+        const inspectionDate = new Date(inspection.date);
+        const inspectionKey = `${inspectionDate.getFullYear()}-${String(inspectionDate.getMonth() + 1).padStart(2, '0')}`;
+        return inspectionKey === monthKey && inspection.varroaPerDay !== null;
+      });
+      
+      const avgVarroa = monthInspections.length > 0 
+        ? monthInspections.reduce((sum, inspection) => sum + inspection.varroaPerDay, 0) / monthInspections.length
+        : 0;
+      
+      monthlyData.push({
+        month: months[date.getMonth()],
+        level: avgVarroa,
+        year: date.getFullYear()
+      });
+    }
+    return monthlyData;
+  };
+
+  const monthlyHoney = calculateMonthlyHoney();
   const varroaTrend = calculateVarroaTrend();
 
   const maxHoney = Math.max(...monthlyHoney.map(m => m.amount));
@@ -111,28 +95,6 @@ export default function StatisticsScreen() {
           <TouchableOpacity style={styles.filterButton}>
             <Filter size={20} color="#8B4513" />
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.periodSelector}>
-          {periods.map((period) => (
-            <TouchableOpacity
-              key={period}
-              style={[
-                styles.periodButton,
-                selectedPeriod === period && styles.periodButtonActive
-              ]}
-              onPress={() => setSelectedPeriod(period)}
-            >
-              <Text
-                style={[
-                  styles.periodText,
-                  selectedPeriod === period && styles.periodTextActive
-                ]}
-              >
-                {period.charAt(0).toUpperCase() + period.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -159,7 +121,7 @@ export default function StatisticsScreen() {
           </View>
 
           <View style={styles.chartContainer}>
-            <Text style={styles.chartTitle}>Honungsskörd per månad (kg)</Text>
+            <Text style={styles.chartTitle}>Honungsskörd senaste 12 månaderna (kg)</Text>
             <View style={styles.chart}>
               {monthlyHoney.map((month, index) => (
                 <View key={index} style={styles.barContainer}>
@@ -174,7 +136,12 @@ export default function StatisticsScreen() {
                       ]} 
                     />
                   </View>
-                  <Text style={styles.barLabel}>{month.month}</Text>
+                  <Text style={styles.barLabel}>
+                    {month.year !== new Date().getFullYear() 
+                      ? `${month.month} ${month.year.toString().slice(-2)}` 
+                      : month.month
+                    }
+                  </Text>
                   <Text style={styles.barValue}>{month.amount}</Text>
                 </View>
               ))}
@@ -183,7 +150,7 @@ export default function StatisticsScreen() {
 
           <View style={styles.chartContainer}>
             <Text style={styles.chartTitle}>
-              Varroa per dag trend {selectedPeriod === 'månad' ? '(senaste 12 månaderna)' : '(i år)'}
+              Varroa per dag trend (senaste 12 månaderna)
             </Text>
             <View style={styles.chart}>
               {varroaTrend.map((month, index) => (
@@ -200,7 +167,7 @@ export default function StatisticsScreen() {
                     />
                   </View>
                   <Text style={styles.barLabel}>
-                    {selectedPeriod === 'månad' && month.year !== new Date().getFullYear() 
+                    {month.year !== new Date().getFullYear() 
                       ? `${month.month} ${month.year.toString().slice(-2)}` 
                       : month.month
                     }
@@ -300,31 +267,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-  },
-  periodSelector: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: 'white',
-    borderRadius: 25,
-    padding: 4,
-  },
-  periodButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 20,
-  },
-  periodButtonActive: {
-    backgroundColor: '#F7B801',
-  },
-  periodText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#8B7355',
-  },
-  periodTextActive: {
-    color: 'white',
   },
   scrollView: {
     flex: 1,
