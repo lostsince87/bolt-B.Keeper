@@ -87,7 +87,10 @@ export default function InspectionsScreen() {
   const handleInspectionPress = (inspection) => {
     router.push({
       pathname: '/inspection-details',
-      params: { inspectionId: inspection.id }
+      params: { 
+        inspectionId: inspection.id,
+        fromHiveId: null // No hive context from inspections list
+      }
     });
   };
 

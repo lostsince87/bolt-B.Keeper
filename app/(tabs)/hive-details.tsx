@@ -88,7 +88,10 @@ export default function HiveDetailsScreen() {
   const handleInspectionPress = (inspection) => {
     router.push({
       pathname: '/inspection-details',
-      params: { inspectionId: inspection.id }
+      params: { 
+        inspectionId: inspection.id,
+        fromHiveId: hive.id
+      }
     });
   };
 

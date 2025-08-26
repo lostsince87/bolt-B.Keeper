@@ -3,11 +3,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Thermometer, Cloud, Crown, Scissors, Bug, Activity, Layers, FileText, CreditCard as Edit, Snowflake, Shield } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useRouter } from 'expo-router';
 
 export default function InspectionDetailsScreen() {
-  const { inspectionId } = useLocalSearchParams();
+  const { inspectionId, fromHiveId } = useLocalSearchParams();
   const [inspection, setInspection] = useState(null);
+  const routerInstance = useRouter();
 
   useEffect(() => {
     // Load inspection data
@@ -55,11 +56,23 @@ export default function InspectionDetailsScreen() {
     );
   };
 
+  const handleBack = () => {
+    if (fromHiveId) {
+      // Go back to hive details if we came from there
+      router.push({
+        pathname: '/hive-details',
+        params: { hiveId: fromHiveId }
+      });
+    } else {
+      // Otherwise go back normally
+      router.back();
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#FFF8E1', '#F5F5DC']} style={styles.gradient}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <ArrowLeft size={24} color="#8B4513" />
           </TouchableOpacity>
           <Text style={styles.title}>Inspektionsdetaljer</Text>
