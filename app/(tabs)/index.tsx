@@ -33,10 +33,6 @@ export default function HomeScreen() {
                 style={styles.logo}
                 resizeMode="contain"
               />
-              <View style={styles.welcomeContainer}>
-                <Text style={styles.appName}>B.Keeper</Text>
-                <Text style={styles.subtitle}>Välkommen tillbaka, biodlare!</Text>
-              </View>
             </View>
           </View>
 
@@ -115,22 +111,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   logo: {
-    height: 60,
-    width: 60,
-    marginRight: 16,
-  },
-  welcomeContainer: {
-    flex: 1,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8B7355',
+    height: 120,
+    width: 120,
   },
   section: {
     paddingHorizontal: 20,
