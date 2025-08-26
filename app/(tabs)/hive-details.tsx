@@ -311,6 +311,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  deleteButton: {
+    backgroundColor: 'white',
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   scrollView: {
     flex: 1,
     paddingHorizontal: 20,
