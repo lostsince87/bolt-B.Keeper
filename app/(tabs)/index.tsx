@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   logoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 0,
   },
   logo: {
