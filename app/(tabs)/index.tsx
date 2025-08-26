@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     height: 150,
-    width: '50%',
+    width: '120%',
     marginBottom: 1,
   },
   subtitle: {
