@@ -178,13 +178,6 @@ export default function HivesScreen() {
                 params: { hiveId: hive.id }
               })}
             >
-              <TouchableOpacity 
-                style={styles.deleteButton}
-                onPress={() => handleDeleteHive(hive.id, hive.name)}
-              >
-                <Trash2 size={16} color="#E74C3C" />
-              </TouchableOpacity>
-              
               <View style={styles.hiveHeader}>
                 <View>
                   <Text style={styles.hiveName}>{hive.name}</Text>
