@@ -18,7 +18,7 @@ export default function InspectionsScreen() {
       duration: '45 min',
       rating: 5,
       notes: 'Mycket aktiv samhälle. Drottningen sedd och märkt. God byggtakt på nya ramar.',
-      findings: ['Drottning sedd', 'Yngel i alla stadier', 'Inga varroamiter'],
+      findings: ['Drottning sedd', 'Yngel i alla stadier', 'Varroa: 1.2/dag (lågt)'],
     },
     {
       id: 2,
@@ -29,7 +29,7 @@ export default function InspectionsScreen() {
       duration: '30 min',
       rating: 4,
       notes: 'Normalt beteende. Lite varroamiter upptäckta på botten. Planera behandling.',
-      findings: ['Varroamiter upptäckta', 'Honung i övre magasin', 'Behöver mer plats'],
+      findings: ['Varroa: 3.2/dag (normalt)', 'Honung i övre magasin', 'Behöver mer plats'],
     },
     {
       id: 3,
@@ -40,7 +40,7 @@ export default function InspectionsScreen() {
       duration: '20 min',
       rating: 2,
       notes: 'Svag aktivitet. Drottningen inte sedd. Misstänker drottninglöshet.',
-      findings: ['Drottning ej sedd', 'Få bin', 'Aggressivt beteende'],
+      findings: ['Drottning ej sedd', 'Få bin', 'Varroa: 6.8/dag (högt)'],
     },
   ];
 

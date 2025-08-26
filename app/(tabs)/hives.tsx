@@ -13,7 +13,7 @@ export default function HivesScreen() {
       lastInspection: '2024-01-15',
       status: 'excellent',
       population: 'Stark',
-      varroa: '1.2%',
+      varroa: '1.2/dag',
       honey: '25 kg',
       frames: '18/20',
     },
@@ -24,7 +24,7 @@ export default function HivesScreen() {
       lastInspection: '2024-01-12',
       status: 'good',
       population: 'Medel',
-      varroa: '2.8%',
+      varroa: '3.2/dag',
       honey: '18 kg',
       frames: '14/20',
     },
@@ -35,7 +35,7 @@ export default function HivesScreen() {
       lastInspection: '2024-01-10',
       status: 'warning',
       population: 'Svag',
-      varroa: '4.1%',
+      varroa: '6.8/dag',
       honey: '8 kg',
       frames: '10/20',
     },
@@ -101,7 +101,7 @@ export default function HivesScreen() {
                 <View style={styles.statItem}>
                   <AlertTriangle size={16} color="#E74C3C" />
                   <Text style={styles.statLabel}>Varroa</Text>
-                  <Text style={[styles.statValue, { color: parseFloat(hive.varroa) > 3 ? '#E74C3C' : '#8FBC8F' }]}>
+                  <Text style={[styles.statValue, { color: parseFloat(hive.varroa) > 5 ? '#E74C3C' : parseFloat(hive.varroa) > 2 ? '#FF8C42' : '#8FBC8F' }]}>
                     {hive.varroa}
                   </Text>
                 </View>

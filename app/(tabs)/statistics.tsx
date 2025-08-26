@@ -11,7 +11,7 @@ export default function StatisticsScreen() {
 
   const yearlyStats = {
     totalHoney: 145,
-    averageVarroa: 2.3,
+    averageVarroa: 3.7,
     inspections: 48,
     activeHives: 12,
   };
@@ -38,12 +38,12 @@ export default function StatisticsScreen() {
     { month: 'Apr', level: 2.0 },
     { month: 'Maj', level: 1.5 },
     { month: 'Jun', level: 2.8 },
-    { month: 'Jul', level: 3.2 },
-    { month: 'Aug', level: 2.1 },
-    { month: 'Sep', level: 1.9 },
-    { month: 'Okt', level: 2.3 },
-    { month: 'Nov', level: 2.7 },
-    { month: 'Dec', level: 2.5 },
+    { month: 'Jul', level: 5.2 },
+    { month: 'Aug', level: 4.1 },
+    { month: 'Sep', level: 3.9 },
+    { month: 'Okt', level: 4.3 },
+    { month: 'Nov', level: 6.7 },
+    { month: 'Dec', level: 5.5 },
   ];
 
   const maxHoney = Math.max(...monthlyHoney.map(m => m.amount));
@@ -131,7 +131,7 @@ export default function StatisticsScreen() {
           </View>
 
           <View style={styles.chartContainer}>
-            <Text style={styles.chartTitle}>Varroagrad trend (%)</Text>
+            <Text style={styles.chartTitle}>Varroa per dag trend</Text>
             <View style={styles.chart}>
               {varroaTrend.map((month, index) => (
                 <View key={index} style={styles.barContainer}>
@@ -141,7 +141,7 @@ export default function StatisticsScreen() {
                         styles.bar,
                         { 
                           height: (month.level / maxVarroa) * 120,
-                          backgroundColor: month.level > 3 ? '#E74C3C' : month.level > 2 ? '#FF8C42' : '#8FBC8F'
+                          backgroundColor: month.level > 5 ? '#E74C3C' : month.level > 2 ? '#FF8C42' : '#8FBC8F'
                         }
                       ]} 
                     />
@@ -149,7 +149,7 @@ export default function StatisticsScreen() {
                   <Text style={styles.barLabel}>{month.month}</Text>
                   <Text style={[
                     styles.barValue,
-                    { color: month.level > 3 ? '#E74C3C' : '#8B7355' }
+                    { color: month.level > 5 ? '#E74C3C' : '#8B7355' }
                   ]}>
                     {month.level}
                   </Text>
@@ -180,7 +180,7 @@ export default function StatisticsScreen() {
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>Övervaka varroa</Text>
                 <Text style={styles.insightText}>
-                  Kupa Gamma visar högre varroagrad. Planera behandling inom kort.
+                  Kupa Gamma visar 6.8 varroa/dag (högt). Planera behandling omedelbart.
                 </Text>
               </View>
             </View>

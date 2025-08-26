@@ -1,24 +1,68 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 
 export default function AddInspectionScreen() {
   const [selectedHive, setSelectedHive] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [weather, setWeather] = useState('');
-  const [temperature, setTemperature] = useState('');
+  const [weather, setWeather] = useState('Soligt, 18°C'); // Auto-filled
+  const [temperature, setTemperature] = useState('18');
   const [broodFrames, setBroodFrames] = useState('');
   const [totalFrames, setTotalFrames] = useState('');
   const [queenSeen, setQueenSeen] = useState<boolean | null>(null);
   const [temperament, setTemperament] = useState('');
-  const [varroaLevel, setVarroaLevel] = useState('');
+  const [varroaCount, setVarroaCount] = useState('');
+  const [varroaDays, setVarroaDays] = useState('');
+  const [varroaPerDay, setVarroaPerDay] = useState<number | null>(null);
+  const [varroaLevel, setVarroaLevel] = useState<'lågt' | 'normalt' | 'högt' | null>(null);
   const [notes, setNotes] = useState('');
 
   const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
+
+  // Calculate varroa per day when count or days change
+  const calculateVarroaPerDay = (count: string, days: string) => {
+    const countNum = parseFloat(count);
+    const daysNum = parseFloat(days);
+    
+    if (countNum >= 0 && daysNum > 0) {
+      const perDay = countNum / daysNum;
+      setVarroaPerDay(perDay);
+      
+      if (perDay <= 2) {
+        setVarroaLevel('lågt');
+      } else if (perDay <= 5) {
+        setVarroaLevel('normalt');
+      } else {
+        setVarroaLevel('högt');
+      }
+    } else {
+      setVarroaPerDay(null);
+      setVarroaLevel(null);
+    }
+  };
+
+  const handleVarroaCountChange = (value: string) => {
+    setVarroaCount(value);
+    calculateVarroaPerDay(value, varroaDays);
+  };
+
+  const handleVarroaDaysChange = (value: string) => {
+    setVarroaDays(value);
+    calculateVarroaPerDay(varroaCount, value);
+  };
+
+  const getVarroaLevelColor = (level: string | null) => {
+    switch (level) {
+      case 'lågt': return '#8FBC8F';
+      case 'normalt': return '#F7B801';
+      case 'högt': return '#E74C3C';
+      default: return '#8B7355';
+    }
+  };
 
   const handleSave = () => {
     if (!selectedHive) {
@@ -100,7 +144,7 @@ export default function AddInspectionScreen() {
                     style={styles.input}
                     value={temperature}
                     onChangeText={setTemperature}
-                    placeholder="18°C"
+                    placeholder="18"
                     placeholderTextColor="#8B7355"
                   />
                 </View>
@@ -109,12 +153,14 @@ export default function AddInspectionScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Väder</Text>
-              <View style={styles.inputContainer}>
+              <View style={[styles.inputContainer, { backgroundColor: '#F0F8E8' }]}>
+                <Cloud size={20} color="#8FBC8F" />
                 <TextInput
                   style={styles.input}
                   value={weather}
                   onChangeText={setWeather}
-                  placeholder="t.ex. Soligt, lätt vind"
+                  placeholder="Automatiskt registrerat"
+                  editable={false}
                   placeholderTextColor="#8B7355"
                 />
               </View>
@@ -226,18 +272,52 @@ export default function AddInspectionScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Varroagrad (%)</Text>
-              <View style={styles.inputContainer}>
-                <Bug size={20} color="#E74C3C" />
-                <TextInput
-                  style={styles.input}
-                  value={varroaLevel}
-                  onChangeText={setVarroaLevel}
-                  placeholder="2.5"
-                  keyboardType="decimal-pad"
-                  placeholderTextColor="#8B7355"
-                />
+              <Text style={styles.label}>Varroa-räkning</Text>
+              <View style={styles.row}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 12, marginBottom: 0 }]}>
+                  <Text style={styles.subLabel}>Antal varroa</Text>
+                  <View style={styles.inputContainer}>
+                    <Bug size={20} color="#E74C3C" />
+                    <TextInput
+                      style={styles.input}
+                      value={varroaCount}
+                      onChangeText={handleVarroaCountChange}
+                      placeholder="15"
+                      keyboardType="numeric"
+                      placeholderTextColor="#8B7355"
+                    />
+                  </View>
+                </View>
+
+                <View style={[styles.inputGroup, { flex: 1, marginLeft: 12, marginBottom: 0 }]}>
+                  <Text style={styles.subLabel}>Antal dagar</Text>
+                  <View style={styles.inputContainer}>
+                    <Calendar size={20} color="#8B7355" />
+                    <TextInput
+                      style={styles.input}
+                      value={varroaDays}
+                      onChangeText={handleVarroaDaysChange}
+                      placeholder="7"
+                      keyboardType="numeric"
+                      placeholderTextColor="#8B7355"
+                    />
+                  </View>
+                </View>
               </View>
+              
+              {varroaPerDay !== null && (
+                <View style={[styles.varroaResult, { backgroundColor: getVarroaLevelColor(varroaLevel) + '20' }]}>
+                  <Bug size={20} color={getVarroaLevelColor(varroaLevel)} />
+                  <View style={styles.varroaResultText}>
+                    <Text style={[styles.varroaPerDay, { color: getVarroaLevelColor(varroaLevel) }]}>
+                      {varroaPerDay.toFixed(1)} varroa/dag
+                    </Text>
+                    <Text style={[styles.varroaLevelText, { color: getVarroaLevelColor(varroaLevel) }]}>
+                      {varroaLevel?.toUpperCase()} NIVÅ
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -316,6 +396,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#8B4513',
     marginBottom: 8,
+  },
+  subLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B4513',
+    marginBottom: 6,
   },
   inputContainer: {
     backgroundColor: 'white',
@@ -452,5 +538,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  varroaResult: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  varroaResultText: {
+    marginLeft: 12,
+  },
+  varroaPerDay: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  varroaLevelText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
