@@ -2,9 +2,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
-import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity } from 'lucide-react-native';
+import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { BeehiveIcon } from '@/components/BeehiveIcon';
 
 export default function HomeScreen() {
   const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
@@ -39,7 +40,7 @@ export default function HomeScreen() {
       id: 'hives',
       title: 'Aktiva kupor', 
       value: hiveData.length.toString(), 
-      icon: Briefcase, 
+      icon: BeehiveIcon, 
       color: '#FF8C42' 
     },
     { 
@@ -74,11 +75,11 @@ export default function HomeScreen() {
 
   const availableStats = quickStats.filter(stat => selectedStats.includes(stat.id));
 
-  const upcomingTasks = [
+  const [tasks, setTasks] = useState([
     { task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
     { task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
     { task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
-  ];
+  ]);
 
   const toggleStatSelection = (statId: string) => {
     setSelectedStats(prev => 
@@ -156,8 +157,16 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Kommande uppgifter</Text>
-            {upcomingTasks.map((task, index) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Kommande uppgifter</Text>
+              <TouchableOpacity 
+                style={styles.addTaskButton}
+                onPress={() => router.push('/add-task')}
+              >
+                <Plus size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+            {tasks.map((task, index) => (
               <TouchableOpacity key={index} style={styles.taskCard}>
                 <View style={[styles.taskPriority, { backgroundColor: task.color }]} />
                 <View style={styles.taskContent}>
@@ -238,6 +247,19 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     backgroundColor: 'white',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  addTaskButton: {
+    backgroundColor: '#8FBC8F',
     borderRadius: 20,
     width: 40,
     height: 40,
