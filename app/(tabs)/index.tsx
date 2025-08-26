@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 30,
+    paddingBottom: 10,
   },
   logo: {
     height: 150,
