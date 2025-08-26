@@ -2,22 +2,91 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
-import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar } from 'lucide-react-native';
+import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { useState } from 'react';
 
 export default function HomeScreen() {
-  const quickStats = [
-    { title: 'Aktiva kupor', value: '12', icon: Briefcase, color: '#FF8C42' },
-    { title: 'Inspektioner denna månad', value: '8', icon: FileText, color: '#8FBC8F' },
-    { title: 'Honungsskörd i år', value: '145 kg', icon: Droplets, color: '#F7B801' },
-    { title: 'Snitt varroagrad', value: '2.3%', icon: TrendingUp, color: '#E74C3C' },
+  const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
+  const [showStatsSelector, setShowStatsSelector] = useState(false);
+
+  // Mock data - i riktig app skulle detta komma från databas
+  const hiveData = [
+    { id: 1, name: 'Kupa Alpha', lastInspection: { broodFrames: 8, totalFrames: 18, varroaPerDay: 1.2 } },
+    { id: 2, name: 'Kupa Beta', lastInspection: { broodFrames: 6, totalFrames: 14, varroaPerDay: 3.2 } },
+    { id: 3, name: 'Kupa Gamma', lastInspection: { broodFrames: 4, totalFrames: 10, varroaPerDay: 6.8 } },
   ];
+
+  // Beräkna genomsnittlig population baserat på yngelramar
+  const calculateAveragePopulation = () => {
+    const totalBroodFrames = hiveData.reduce((sum, hive) => sum + hive.lastInspection.broodFrames, 0);
+    const avgBroodFrames = totalBroodFrames / hiveData.length;
+    
+    // Klassificering baserat på genomsnittligt antal yngelramar
+    if (avgBroodFrames >= 7) return 'Stark';
+    if (avgBroodFrames >= 5) return 'Medel';
+    return 'Svag';
+  };
+
+  // Beräkna genomsnittlig varroa
+  const calculateAverageVarroa = () => {
+    const totalVarroa = hiveData.reduce((sum, hive) => sum + hive.lastInspection.varroaPerDay, 0);
+    return (totalVarroa / hiveData.length).toFixed(1);
+  };
+
+  const quickStats = [
+    { 
+      id: 'hives',
+      title: 'Aktiva kupor', 
+      value: hiveData.length.toString(), 
+      icon: Briefcase, 
+      color: '#FF8C42' 
+    },
+    { 
+      id: 'inspections',
+      title: 'Inspektioner denna månad', 
+      value: '8', 
+      icon: FileText, 
+      color: '#8FBC8F' 
+    },
+    { 
+      id: 'honey',
+      title: 'Honungsskörd i år', 
+      value: '145 kg', 
+      icon: Droplets, 
+      color: '#F7B801' 
+    },
+    { 
+      id: 'varroa',
+      title: 'Snitt varroa/dag', 
+      value: `${calculateAverageVarroa()}`, 
+      icon: TrendingUp, 
+      color: '#E74C3C' 
+    },
+    { 
+      id: 'population',
+      title: 'Genomsnittlig population', 
+      value: calculateAveragePopulation(), 
+      icon: Activity, 
+      color: '#8FBC8F' 
+    },
+  ];
+
+  const availableStats = quickStats.filter(stat => selectedStats.includes(stat.id));
 
   const upcomingTasks = [
     { task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
     { task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
     { task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
   ];
+
+  const toggleStatSelection = (statId: string) => {
+    setSelectedStats(prev => 
+      prev.includes(statId) 
+        ? prev.filter(id => id !== statId)
+        : [...prev, statId]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,9 +106,44 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Snabbstatistik</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Snabbstatistik</Text>
+              <TouchableOpacity 
+                style={styles.settingsButton}
+                onPress={() => setShowStatsSelector(!showStatsSelector)}
+              >
+                <Settings size={20} color="#8B4513" />
+              </TouchableOpacity>
+            </View>
+
+            {showStatsSelector && (
+              <View style={styles.statsSelector}>
+                <Text style={styles.statsSelectorTitle}>Välj statistiker att visa:</Text>
+                <View style={styles.statsOptions}>
+                  {quickStats.map((stat) => (
+                    <TouchableOpacity
+                      key={stat.id}
+                      style={[
+                        styles.statsOption,
+                        selectedStats.includes(stat.id) && styles.statsOptionSelected
+                      ]}
+                      onPress={() => toggleStatSelection(stat.id)}
+                    >
+                      <stat.icon size={16} color={selectedStats.includes(stat.id) ? 'white' : '#8B7355'} />
+                      <Text style={[
+                        styles.statsOptionText,
+                        selectedStats.includes(stat.id) && styles.statsOptionTextSelected
+                      ]}>
+                        {stat.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <View style={styles.statsGrid}>
-              {quickStats.map((stat, index) => (
+              {availableStats.map((stat, index) => (
                 <TouchableOpacity key={index} style={styles.statCard}>
                   <View style={[styles.statIcon, { backgroundColor: stat.color + '20' }]}>
                     <stat.icon size={24} color={stat.color} />
@@ -125,7 +229,68 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#8B4513',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 15,
+  },
+  settingsButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statsSelector: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statsSelectorTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B4513',
+    marginBottom: 12,
+  },
+  statsOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statsOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5DC',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  statsOptionSelected: {
+    backgroundColor: '#F7B801',
+  },
+  statsOptionText: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginLeft: 6,
+    fontWeight: '600',
+  },
+  statsOptionTextSelected: {
+    color: 'white',
   },
   statsGrid: {
     flexDirection: 'row',
