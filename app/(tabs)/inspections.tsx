@@ -218,11 +218,11 @@ export default function InspectionsScreen() {
             </View>
           ) : (
             filteredInspections.map((inspection) => (
-            <TouchableOpacity 
-              key={inspection.id} 
-              style={styles.inspectionCard}
-              onPress={() => handleInspectionPress(inspection)}
-            >
+              <TouchableOpacity 
+                key={inspection.id} 
+                style={styles.inspectionCard}
+                onPress={() => handleInspectionPress(inspection)}
+              >
               <View style={styles.inspectionHeader}>
                 <View>
                   <Text style={styles.hiveName}>{inspection.hive}</Text>
@@ -264,8 +264,8 @@ export default function InspectionsScreen() {
                 </View>
                 <Text style={styles.notes}>{inspection.notes}</Text>
               </View>
-            </TouchableOpacity>
-          ))
+              </TouchableOpacity>
+            ))
           )}
 
           <TouchableOpacity style={styles.addInspectionCard} onPress={() => router.push('/add-inspection')}>
