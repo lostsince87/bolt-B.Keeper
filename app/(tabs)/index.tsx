@@ -336,8 +336,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Snabbåtgärder</Text>
             <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Snabbåtgärder</Text>
               <TouchableOpacity 
                 style={styles.settingsButton}
                 onPress={() => setShowQuickActionsSelector(!showQuickActionsSelector)}
