@@ -32,22 +32,6 @@ export default function AddInspectionScreen() {
   const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
   const treatmentOptions = ['Apiguard', 'Bayvarol', 'Apistan', 'Oxalsyra', 'Myrsyra', 'Annat'];
-  
-  // Smart iakttagelser baserat på säsong och vanliga observationer
-  const smartObservations = [
-    { id: 'eggs', label: 'Ägg synliga', icon: '🥚', category: 'yngel' },
-    { id: 'larvae', label: 'Larver i alla stadier', icon: '🐛', category: 'yngel' },
-    { id: 'cappedBrood', label: 'Täckt yngel', icon: '🍯', category: 'yngel' },
-    { id: 'pollenStores', label: 'Goda pollenförråd', icon: '🌼', category: 'förråd' },
-    { id: 'honeyStores', label: 'Honungsförråd', icon: '🍯', category: 'förråd' },
-    { id: 'newComb', label: 'Ny vaxbyggnad', icon: '⬡', category: 'byggnad' },
-    { id: 'activeForagers', label: 'Aktiva samlare', icon: '🐝', category: 'aktivitet' },
-    { id: 'calmBees', label: 'Lugna bin', icon: '😌', category: 'temperament' },
-    { id: 'aggressiveBees', label: 'Aggressiva bin', icon: '😠', category: 'temperament' },
-    { id: 'droneCells', label: 'Drönarceller', icon: '👨', category: 'special' },
-    { id: 'supercedureCells', label: 'Ersättningsceller', icon: '👑', category: 'special' },
-  ];
-  
   const queenColors = [
     { id: 'white', name: 'Vit', color: '#FFFFFF', textColor: '#000000' },
     { id: 'yellow', name: 'Gul', color: '#FFD700', textColor: '#000000' },
@@ -157,6 +141,14 @@ export default function AddInspectionScreen() {
       newQueenMarked: newQueenAdded ? newQueenMarked : null,
       newQueenColor: newQueenAdded && newQueenMarked ? newQueenColor : null,
       newQueenWingClipped: newQueenAdded ? newQueenWingClipped : null,
+      isSwarming,
+      hasQueenCells,
+      queenCellCount: hasQueenCells && queenCellCount ? parseInt(queenCellCount) : null,
+      isColonyMerge,
+      isColonySplit,
+      splitIntoCount: isColonySplit && splitIntoCount ? parseInt(splitIntoCount) : null,
+      mergeWithHive: isColonyMerge ? mergeWithHive : null,
+      observations: selectedObservations,
       createdAt: new Date().toISOString(),
     };
 
