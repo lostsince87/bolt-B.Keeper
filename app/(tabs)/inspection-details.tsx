@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Thermometer, Cloud, Crown, Scissors, Bug, Activity, Layers, FileText, CreditCard as Edit, Snowflake, Shield } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { router, useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function InspectionDetailsScreen() {
   const { inspectionId, fromHiveId } = useLocalSearchParams();
@@ -12,13 +13,17 @@ export default function InspectionDetailsScreen() {
 
   useEffect(() => {
     // Load inspection data
-    try {
-      const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
-      const foundInspection = savedInspections.find(i => i.id.toString() === inspectionId);
-      setInspection(foundInspection);
-    } catch (error) {
-      console.log('Could not load inspection data:', error);
-    }
+    const loadInspection = async () => {
+      try {
+        const savedInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        const foundInspection = savedInspections.find(i => i.id.toString() === inspectionId);
+        setInspection(foundInspection);
+      } catch (error) {
+        console.log('Could not load inspection data:', error);
+      }
+    };
+    
+    loadInspection();
   }, [inspectionId]);
 
   if (!inspection) {
