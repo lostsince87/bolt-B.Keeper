@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
-import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus, Bug, Thermometer, Crown, Scissors, Shield, Snowflake, BarChart3, Eye } from 'lucide-react-native';
+import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus, Bug, Thermometer, Crown, Scissors, Shield, Snowflake, ChartBar as BarChart3, Eye } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { BeehiveIcon } from '@/components/BeehiveIcon';
