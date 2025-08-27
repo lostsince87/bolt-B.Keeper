@@ -192,8 +192,6 @@ export default function AddInspectionScreen() {
         console.log('Could not save inspection:', error);
         Alert.alert('Fel', 'Kunde inte spara inspektionen. Försök igen.');
         return;
-      } catch (error) {
-        console.log('Could not save inspection:', error);
       }
     };
 
