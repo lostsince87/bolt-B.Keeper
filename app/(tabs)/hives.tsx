@@ -8,17 +8,72 @@ import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ============================================
+// HJÄLPFUNKTIONER (Helper Functions)
+// ============================================
+
+// Beräkna drottningens ålder baserat på när den lades till
+const calculateQueenAge = (addedDate: string) => {
+  if (!addedDate) return null;
+  const added = new Date(addedDate);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - added.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 30) {
+    return `${diffDays} dagar`;
+  } else if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} månad${months > 1 ? 'er' : ''}`;
+  } else {
+    const years = Math.floor(diffDays / 365);
+    const remainingMonths = Math.floor((diffDays % 365) / 30);
+    return `${years} år${remainingMonths > 0 ? ` ${remainingMonths} mån` : ''}`;
+  }
+};
+
+// Få färg baserat på kupstatus
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'excellent': return '#8FBC8F'; // Grön
+    case 'good': return '#F7B801';      // Gul
+    case 'warning': return '#FF8C42';   // Orange
+    case 'critical': return '#E74C3C';  // Röd
+    default: return '#8B7355';          // Grå
+  }
+};
+
+// Få text baserat på kupstatus
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'excellent': return 'Utmärkt';
+    case 'good': return 'Bra';
+    case 'warning': return 'Varning';
+    case 'critical': return 'Kritisk';
+    default: return 'Okänd';
+  }
+};
+
+// ============================================
+// HUVUDKOMPONENT (Main Component)
+// ============================================
+
 export default function HivesScreen() {
+  // ============================================
+  // STATE VARIABLER (State Variables)
+  // ============================================
   const [hives, setHives] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
 
+  // ============================================
+  // DATA LADDNING (Data Loading)
+  // ============================================
   useEffect(() => {
-    // Load hives from localStorage
     const loadHives = async () => {
       try {
         const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
         if (savedHives.length === 0) {
-          // Default hives if none saved
+          // Standardkupor om inga är sparade
           const defaultHives = [
             {
               id: 1,
@@ -83,6 +138,11 @@ export default function HivesScreen() {
     loadHives();
   }, []);
 
+  // ============================================
+  // KONSTANTER (Constants)
+  // ============================================
+  
+  // Färger för drottningmärkning
   const queenColors = {
     white: '#FFFFFF',
     yellow: '#FFD700',
@@ -91,45 +151,11 @@ export default function HivesScreen() {
     blue: '#0000FF',
   };
 
-  const calculateQueenAge = (addedDate: string) => {
-    if (!addedDate) return null;
-    const added = new Date(addedDate);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - added.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 30) {
-      return `${diffDays} dagar`;
-    } else if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30);
-      return `${months} månad${months > 1 ? 'er' : ''}`;
-    } else {
-      const years = Math.floor(diffDays / 365);
-      const remainingMonths = Math.floor((diffDays % 365) / 30);
-      return `${years} år${remainingMonths > 0 ? ` ${remainingMonths} mån` : ''}`;
-    }
-  };
+  // ============================================
+  // HÄNDELSEHANTERARE (Event Handlers)
+  // ============================================
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'excellent': return '#8FBC8F';
-      case 'good': return '#F7B801';
-      case 'warning': return '#FF8C42';
-      case 'critical': return '#E74C3C';
-      default: return '#8B7355';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'excellent': return 'Utmärkt';
-      case 'good': return 'Bra';
-      case 'warning': return 'Varning';
-      case 'critical': return 'Kritisk';
-      default: return 'Okänd';
-    }
-  };
-
+  // Hantera radering av kupa
   const handleDeleteHive = (hiveId: number, hiveName: string) => {
     Alert.alert(
       'Radera kupa',
@@ -162,21 +188,31 @@ export default function HivesScreen() {
     );
   };
 
-  // Get unique locations from hives
-  const locations = [...new Set(hives.map(hive => hive.location))];
-  
-  // Get hives for selected location
-  const hivesInLocation = selectedLocation 
-    ? hives.filter(hive => hive.location === selectedLocation)
-    : [];
-
+  // Hantera klick på plats
   const handleLocationPress = (location: string) => {
     setSelectedLocation(location);
   };
 
+  // Gå tillbaka till platsvy
   const handleBackToLocations = () => {
     setSelectedLocation('');
   };
+
+  // ============================================
+  // BERÄKNADE VÄRDEN (Calculated Values)
+  // ============================================
+  
+  // Få unika platser från kupor
+  const locations = [...new Set(hives.map(hive => hive.location))];
+  
+  // Få kupor för vald plats
+  const hivesInLocation = selectedLocation 
+    ? hives.filter(hive => hive.location === selectedLocation)
+    : [];
+
+  // ============================================
+  // RENDER (UI Rendering)
+  // ============================================
 
   return (
     <SafeAreaView style={styles.container}>
@@ -218,23 +254,24 @@ export default function HivesScreen() {
                         <Text style={styles.locationCount}>
                           {hivesAtLocation.length} kup{hivesAtLocation.length !== 1 ? 'or' : 'a'}
                         </Text>
-                          <View style={styles.hiveIndicators}>
-                            {hive.isNucleus && (
-                              <View style={styles.indicator}>
-                                <Baby size={12} color="#8FBC8F" />
-                              </View>
-                            )}
-                            {hive.isWintered && (
-                              <View style={styles.indicator}>
-                                <Snowflake size={12} color="#87CEEB" />
-                              </View>
-                            )}
-                            {!hive.hasQueen && (
-                              <View style={styles.indicator}>
-                                <AlertOctagon size={12} color="#E74C3C" />
-                              </View>
-                            )}
-                          </View>
+                        {/* Visa indikatorer för speciella kupor på denna plats */}
+                        <View style={styles.hiveIndicators}>
+                          {hivesAtLocation.some(hive => hive.isNucleus) && (
+                            <View style={styles.indicator}>
+                              <Baby size={12} color="#8FBC8F" />
+                            </View>
+                          )}
+                          {hivesAtLocation.some(hive => hive.isWintered) && (
+                            <View style={styles.indicator}>
+                              <Snowflake size={12} color="#87CEEB" />
+                            </View>
+                          )}
+                          {hivesAtLocation.some(hive => !hive.hasQueen) && (
+                            <View style={styles.indicator}>
+                              <AlertOctagon size={12} color="#E74C3C" />
+                            </View>
+                          )}
+                        </View>
                       </View>
                       <ChevronRight size={24} color="#8B7355" />
                     </View>
@@ -573,3 +610,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 });
+// ============================================
+// STILAR (Styles)
+// ============================================
+// Alla stilar är organiserade logiskt efter komponentstruktur

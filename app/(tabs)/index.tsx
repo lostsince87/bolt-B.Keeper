@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   actionMenuContainer: {
     alignItems: 'center',
     position: 'relative',
-    marginBottom: 100,
+    marginBottom: 120, // Mer marginal så plus-knappen inte täcks av docken
   },
   plusButton: {
     backgroundColor: '#F7B801',
@@ -393,16 +393,18 @@ const styles = StyleSheet.create({
   },
   actionMenu: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 90, // Flytta menyn lite högre upp
     alignItems: 'center',
     gap: 12,
+    maxWidth: '100%', // Förhindra att menyn går utanför skärmen
   },
   actionMenuItem: {
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    minWidth: 200,
+    minWidth: 180, // Mindre bredd så den inte går utanför skärmen
+    maxWidth: 250, // Max bredd för att förhindra overflow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
