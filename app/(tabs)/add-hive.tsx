@@ -4,8 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, MapPin, Briefcase, Save, Crown, Scissors, Camera } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 // ============================================
 // HUVUDKOMPONENT (Main Component)
@@ -50,10 +50,30 @@ export default function AddHiveScreen() {
   // ============================================
   
   // Hantera bildval
-  const handleImagePicker = () => {
-    // I en riktig app skulle du använda expo-image-picker här
-    // För nu simulerar vi att en bild valts
-    setSelectedImage('selected_image.jpg');
+  const handleImagePicker = async () => {
+    try {
+      // Be om tillstånd för kamerarulle
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Tillstånd krävs', 'Du behöver ge tillstånd för att välja bilder');
+        return;
+      }
+
+      // Öppna bildväljare
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Fel', 'Kunde inte välja bild');
+    }
   };
 
   // Spara kupa
