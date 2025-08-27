@@ -150,7 +150,7 @@ export default function StatisticsScreen() {
 
           <View style={styles.chartContainer}>
             <Text style={styles.chartTitle}>
-              Varroa per dag trend (senaste 12 månaderna)
+              Varroa (senaste 12 månaderna)
             </Text>
             <View style={styles.chart}>
               {varroaTrend.map((month, index) => (
