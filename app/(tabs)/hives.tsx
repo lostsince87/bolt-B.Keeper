@@ -72,7 +72,10 @@ export default function HivesScreen() {
     const loadHives = async () => {
       try {
         const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
-        if (savedHives.length === 0) {
+        // Filtrera bort ogiltiga objekt från AsyncStorage
+        const validHives = savedHives.filter(hive => hive && typeof hive === 'object' && hive.id);
+        
+        if (validHives.length === 0) {
           // Standardkupor om inga är sparade
           const defaultHives = [
             {
