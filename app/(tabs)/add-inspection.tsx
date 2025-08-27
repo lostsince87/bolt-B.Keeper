@@ -141,14 +141,6 @@ export default function AddInspectionScreen() {
       newQueenMarked: newQueenAdded ? newQueenMarked : null,
       newQueenColor: newQueenAdded && newQueenMarked ? newQueenColor : null,
       newQueenWingClipped: newQueenAdded ? newQueenWingClipped : null,
-      isSwarming,
-      hasQueenCells,
-      queenCellCount: hasQueenCells && queenCellCount ? parseInt(queenCellCount) : null,
-      isColonyMerge,
-      isColonySplit,
-      splitIntoCount: isColonySplit && splitIntoCount ? parseInt(splitIntoCount) : null,
-      mergeWithHive: isColonyMerge ? mergeWithHive : null,
-      observations: selectedObservations,
       createdAt: new Date().toISOString(),
     };
 
@@ -961,5 +953,50 @@ const styles = StyleSheet.create({
   colorText: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  observationCategory: {
+    marginBottom: 16,
+  },
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 8,
+  },
+  observationGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  observationButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  observationButtonSelected: {
+    backgroundColor: '#8FBC8F',
+    borderColor: '#8FBC8F',
+  },
+  observationIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  observationText: {
+    fontSize: 12,
+    color: '#8B7355',
+    fontWeight: '600',
+  },
+  observationTextSelected: {
+    color: 'white',
   },
 });
