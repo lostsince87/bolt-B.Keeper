@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight } from 'lucide-react-native';
+import { Snowflake, Baby, AlertOctagon } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
@@ -217,6 +218,23 @@ export default function HivesScreen() {
                         <Text style={styles.locationCount}>
                           {hivesAtLocation.length} kup{hivesAtLocation.length !== 1 ? 'or' : 'a'}
                         </Text>
+                          <View style={styles.hiveIndicators}>
+                            {hive.isNucleus && (
+                              <View style={styles.indicator}>
+                                <Baby size={12} color="#8FBC8F" />
+                              </View>
+                            )}
+                            {hive.isWintered && (
+                              <View style={styles.indicator}>
+                                <Snowflake size={12} color="#87CEEB" />
+                              </View>
+                            )}
+                            {!hive.hasQueen && (
+                              <View style={styles.indicator}>
+                                <AlertOctagon size={12} color="#E74C3C" />
+                              </View>
+                            )}
+                          </View>
                       </View>
                       <ChevronRight size={24} color="#8B7355" />
                     </View>
@@ -466,6 +484,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#8B7355',
     marginTop: 2,
+  },
+  hiveIndicators: {
+    flexDirection: 'row',
+    marginLeft: 8,
+    gap: 4,
+  },
+  indicator: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   addHiveCard: {
     backgroundColor: 'white',
