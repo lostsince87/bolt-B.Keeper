@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight } from 'lucide-react-native';
-import { Snowflake, Baby, AlertOctagon } from 'lucide-react-native';
+import { Snowflake, Baby, OctagonAlert as AlertOctagon } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
