@@ -1,22 +1,41 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, MapPin, Briefcase, Save, Crown, Scissors } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Briefcase, Save, Crown, Scissors, Camera } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ============================================
+// HUVUDKOMPONENT (Main Component)
+// ============================================
+
 export default function AddHiveScreen() {
+  // ============================================
+  // STATE VARIABLER (State Variables)
+  // ============================================
+  
+  // Grundläggande kupinformation
   const [hiveName, setHiveName] = useState('');
   const [location, setLocation] = useState('');
   const [frames, setFrames] = useState('20');
   const [isNucleus, setIsNucleus] = useState<boolean | null>(null);
   const [notes, setNotes] = useState('');
+  
+  // Drottninginformation
   const [hasQueen, setHasQueen] = useState<boolean | null>(null);
   const [queenMarked, setQueenMarked] = useState<boolean | null>(null);
   const [queenColor, setQueenColor] = useState('');
   const [queenWingClipped, setQueenWingClipped] = useState<boolean | null>(null);
+  
+  // Bildinformation
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  // ============================================
+  // KONSTANTER (Constants)
+  // ============================================
+  
+  // Tillgängliga färger för drottningmärkning
   const queenColors = [
     { id: 'white', name: 'Vit', color: '#FFFFFF', textColor: '#000000' },
     { id: 'yellow', name: 'Gul', color: '#FFD700', textColor: '#000000' },
@@ -25,7 +44,20 @@ export default function AddHiveScreen() {
     { id: 'blue', name: 'Blå', color: '#0000FF', textColor: '#FFFFFF' },
   ];
 
+  // ============================================
+  // HÄNDELSEHANTERARE (Event Handlers)
+  // ============================================
+  
+  // Hantera bildval
+  const handleImagePicker = () => {
+    // I en riktig app skulle du använda expo-image-picker här
+    // För nu simulerar vi att en bild valts
+    setSelectedImage('selected_image.jpg');
+  };
+
+  // Spara kupa
   const handleSave = () => {
+    // Validering av obligatoriska fält
     if (!hiveName.trim()) {
       Alert.alert('Fel', 'Ange ett namn för kupan');
       return;
@@ -57,7 +89,7 @@ export default function AddHiveScreen() {
       return;
     }
 
-    // Create new hive object with queen data
+    // Skapa drottningdata
     const queenData = hasQueen ? {
       hasQueen: true,
       queenMarked,
@@ -72,18 +104,20 @@ export default function AddHiveScreen() {
       queenAddedDate: null,
     };
 
+    // Skapa nytt kupobjekt
     const newHive = {
-      id: Date.now(), // Simple ID generation
+      id: Date.now(), // Enkel ID-generering
       name: hiveName.trim(),
       location: location.trim(),
       frames: frameCount,
       isNucleus: frameCount <= 10 ? isNucleus : false,
       notes: notes.trim(),
       createdAt: new Date().toISOString(),
+      image: selectedImage, // Spara bildväg
       ...queenData,
     };
 
-    // Save to AsyncStorage (in real app, save to database)
+    // Spara till AsyncStorage
     const saveHive = async () => {
       try {
         const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
@@ -103,6 +137,10 @@ export default function AddHiveScreen() {
     });
   };
 
+  // ============================================
+  // RENDER (UI Rendering)
+  // ============================================
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -119,6 +157,7 @@ export default function AddHiveScreen() {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.formContainer}>
+            {/* GRUNDLÄGGANDE INFORMATION */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Kupans namn *</Text>
               <View style={styles.inputContainer}>
@@ -161,6 +200,25 @@ export default function AddHiveScreen() {
               </View>
             </View>
 
+            {/* BILDUPPLADDNING */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Bild av kupan</Text>
+              {!selectedImage ? (
+                <TouchableOpacity style={styles.imageUploadButton} onPress={handleImagePicker}>
+                  <Camera size={24} color="#8B7355" />
+                  <Text style={styles.imageUploadText}>Lägg till bild</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.imagePreview}>
+                  <Text style={styles.imagePreviewText}>Bild vald</Text>
+                  <TouchableOpacity style={styles.changeImageButton} onPress={handleImagePicker}>
+                    <Text style={styles.changeImageText}>Ändra</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* AVLÄGGARE-KONTROLL (visas bara om få ramar) */}
             {parseInt(frames) <= 10 && (
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Är detta en avläggare?</Text>
@@ -197,6 +255,7 @@ export default function AddHiveScreen() {
               </View>
             )}
 
+            {/* DROTTNINGINFORMATION */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Drottning finns *</Text>
               <View style={styles.queenSelector}>
@@ -328,6 +387,7 @@ export default function AddHiveScreen() {
               </>
             )}
 
+            {/* ANTECKNINGAR */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Anteckningar</Text>
               <TextInput
@@ -342,6 +402,7 @@ export default function AddHiveScreen() {
               />
             </View>
 
+            {/* SPARA-KNAPP */}
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
               <Save size={24} color="white" />
               <Text style={styles.saveButtonText}>Spara kupa</Text>
