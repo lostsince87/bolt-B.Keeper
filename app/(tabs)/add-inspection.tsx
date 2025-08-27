@@ -163,11 +163,31 @@ export default function AddInspectionScreen() {
                 queenColor: newQueenMarked ? newQueenColor : null,
                 queenWingClipped: newQueenWingClipped,
                 queenAddedDate: new Date().toISOString(),
+                isWintered: isWintering ? true : hive.isWintered,
               };
             }
             return hive;
           });
+          
+          // Update wintering status for all hives if this is a wintering inspection
+          if (isWintering) {
+            const winteringHives = updatedHives.map(hive => ({
+              ...hive,
+              isWintered: true
+            }));
+            await AsyncStorage.setItem('hives', JSON.stringify(winteringHives));
+          } else {
+            await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+          }
+        } else if (isWintering) {
+          // Update wintering status even if no new queen
+          const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+          const winteringHives = existingHives.map(hive => ({
+            ...hive,
+            isWintered: true
+          }));
           await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+        }
         }
       } catch (error) {
         console.log('Could not save inspection:', error);
