@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud, Snowflake, Shield } from 'lucide-react-native';
-import { useState } from 'react';
+import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud, Snowflake, Shield, Scissors } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -41,7 +41,7 @@ export default function AddInspectionScreen() {
   ];
 
   // Auto-fill weather when component mounts
-  useState(() => {
+  useEffect(() => {
     // Simulate getting actual weather data
     const getWeatherData = async () => {
       // In a real app, you would call a weather API here
@@ -64,7 +64,7 @@ export default function AddInspectionScreen() {
     };
     
     getWeatherData();
-  });
+  }, []);
 
   // Calculate varroa per day when count or days change
   const calculateVarroaPerDay = (count: string, days: string) => {
@@ -186,8 +186,7 @@ export default function AddInspectionScreen() {
             ...hive,
             isWintered: true
           }));
-          await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
-        }
+          await AsyncStorage.setItem('hives', JSON.stringify(winteringHives));
         }
       } catch (error) {
         console.log('Could not save inspection:', error);
@@ -927,34 +926,6 @@ const styles = StyleSheet.create({
     color: '#8B7355',
   },
   treatmentOptionTextSelected: {
-    color: 'white',
-  },
-  queenSelector: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  queenOption: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderWidth: 2,
-    borderColor: '#E8D5B7',
-  },
-  queenOptionSelected: {
-    backgroundColor: '#F7B801',
-    borderColor: '#F7B801',
-  },
-  queenOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#8B7355',
-    marginLeft: 8,
-  },
-  queenOptionTextSelected: {
     color: 'white',
   },
   colorSelector: {
