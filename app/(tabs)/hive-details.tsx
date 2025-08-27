@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, MapPin, Calendar, Crown, Scissors, Activity, Droplets, Bug, FileText, CreditCard as Edit, Plus } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HiveDetailsScreen() {
   const { hiveId } = useLocalSearchParams();
@@ -12,20 +13,24 @@ export default function HiveDetailsScreen() {
 
   useEffect(() => {
     // Load hive data
-    try {
-      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
-      const foundHive = savedHives.find(h => h.id.toString() === hiveId);
-      setHive(foundHive);
+    const loadHiveData = async () => {
+      try {
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        const foundHive = savedHives.find(h => h.id.toString() === hiveId);
+        setHive(foundHive);
 
-      // Load inspections for this hive
-      const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
-      const hiveInspections = savedInspections
-        .filter(inspection => inspection.hive === foundHive?.name)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setInspections(hiveInspections);
-    } catch (error) {
-      console.log('Could not load hive data:', error);
-    }
+        // Load inspections for this hive
+        const savedInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        const hiveInspections = savedInspections
+          .filter(inspection => inspection.hive === foundHive?.name)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setInspections(hiveInspections);
+      } catch (error) {
+        console.log('Could not load hive data:', error);
+      }
+    };
+    
+    loadHiveData();
   }, [hiveId]);
 
   if (!hive) {

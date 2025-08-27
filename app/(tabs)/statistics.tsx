@@ -3,19 +3,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChartBar as BarChart3, TrendingUp, TrendingDown, Droplets, Bug, Calendar, Filter } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function StatisticsScreen() {
   const [inspections, setInspections] = useState([]);
 
   useEffect(() => {
     // Load inspections from localStorage
-    try {
-      const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
-      setInspections(savedInspections);
-    } catch (error) {
-      console.log('Could not load inspections:', error);
-      setInspections([]);
-    }
+    const loadInspections = async () => {
+      try {
+        const savedInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        setInspections(savedInspections);
+      } catch (error) {
+        console.log('Could not load inspections:', error);
+        setInspections([]);
+      }
+    };
+    
+    loadInspections();
   }, []);
 
   const yearlyStats = {

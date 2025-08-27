@@ -6,6 +6,7 @@ import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, 
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { BeehiveIcon } from '@/components/BeehiveIcon';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
   const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
@@ -17,48 +18,52 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // Load data from localStorage
-    try {
-      const savedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
+    const loadData = async () => {
+      try {
+        const savedTasks = JSON.parse(await AsyncStorage.getItem('tasks') || '[]');
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
       
-      if (savedTasks.length === 0) {
-        // Default tasks if none saved
-        const defaultTasks = [
-          { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
-          { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
-          { id: 3, task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
-        ];
-        setTasks(defaultTasks);
-        localStorage.setItem('tasks', JSON.stringify(defaultTasks));
-      } else {
-        // Convert saved tasks to display format
-        const displayTasks = savedTasks.map(task => ({
-          ...task,
-          color: task.priority === 'hög' ? '#E74C3C' : task.priority === 'medel' ? '#F39C12' : '#8FBC8F'
-        }));
-        setTasks(displayTasks);
-      }
+        if (savedTasks.length === 0) {
+          // Default tasks if none saved
+          const defaultTasks = [
+            { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
+            { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
+            { id: 3, task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
+          ];
+          setTasks(defaultTasks);
+          await AsyncStorage.setItem('tasks', JSON.stringify(defaultTasks));
+        } else {
+          // Convert saved tasks to display format
+          const displayTasks = savedTasks.map(task => ({
+            ...task,
+            color: task.priority === 'hög' ? '#E74C3C' : task.priority === 'medel' ? '#F39C12' : '#8FBC8F'
+          }));
+          setTasks(displayTasks);
+        }
 
-      if (savedHives.length === 0) {
-        // Default hive data for calculations
-        const defaultHiveData = [
-          { id: 1, name: 'Kupa Alpha', lastInspection: { broodFrames: 8, totalFrames: 18, varroaPerDay: 1.2 } },
-          { id: 2, name: 'Kupa Beta', lastInspection: { broodFrames: 6, totalFrames: 14, varroaPerDay: 3.2 } },
-          { id: 3, name: 'Kupa Gamma', lastInspection: { broodFrames: 4, totalFrames: 10, varroaPerDay: 6.8 } },
-        ];
-        setHives(defaultHiveData);
-      } else {
-        setHives(savedHives);
-      }
+        if (savedHives.length === 0) {
+          // Default hive data for calculations
+          const defaultHiveData = [
+            { id: 1, name: 'Kupa Alpha', lastInspection: { broodFrames: 8, totalFrames: 18, varroaPerDay: 1.2 } },
+            { id: 2, name: 'Kupa Beta', lastInspection: { broodFrames: 6, totalFrames: 14, varroaPerDay: 3.2 } },
+            { id: 3, name: 'Kupa Gamma', lastInspection: { broodFrames: 4, totalFrames: 10, varroaPerDay: 6.8 } },
+          ];
+          setHives(defaultHiveData);
+        } else {
+          setHives(savedHives);
+        }
 
-      // Load quick actions preferences
-      const savedQuickActions = JSON.parse(localStorage.getItem('quickActions') || '[]');
-      if (savedQuickActions.length > 0) {
-        setSelectedQuickActions(savedQuickActions);
+        // Load quick actions preferences
+        const savedQuickActions = JSON.parse(await AsyncStorage.getItem('quickActions') || '[]');
+        if (savedQuickActions.length > 0) {
+          setSelectedQuickActions(savedQuickActions);
+        }
+      } catch (error) {
+        console.log('Could not load data from AsyncStorage:', error);
       }
-    } catch (error) {
-      console.log('Could not load data from localStorage:', error);
-    }
+    };
+    
+    loadData();
   }, []);
 
   // Beräkna genomsnittlig population baserat på yngelramar
@@ -224,11 +229,15 @@ export default function HomeScreen() {
     setSelectedQuickActions(newSelection);
     
     // Save to localStorage
-    try {
-      localStorage.setItem('quickActions', JSON.stringify(newSelection));
-    } catch (error) {
-      console.log('Could not save quick actions:', error);
-    }
+    const saveQuickActions = async () => {
+      try {
+        await AsyncStorage.setItem('quickActions', JSON.stringify(newSelection));
+      } catch (error) {
+        console.log('Could not save quick actions:', error);
+      }
+    };
+    
+    saveQuickActions();
   };
 
   return (

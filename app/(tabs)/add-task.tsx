@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Save, CircleAlert as AlertTriangle } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddTaskScreen() {
   const [taskTitle, setTaskTitle] = useState('');
@@ -51,20 +52,24 @@ export default function AddTaskScreen() {
       createdAt: new Date().toISOString(),
     };
 
-    // Save task to localStorage
-    try {
-      const existingTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-      const updatedTasks = [...existingTasks, newTask];
-      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
-    } catch (error) {
-      console.log('Could not save task:', error);
-    }
+    // Save task to AsyncStorage
+    const saveTask = async () => {
+      try {
+        const existingTasks = JSON.parse(await AsyncStorage.getItem('tasks') || '[]');
+        const updatedTasks = [...existingTasks, newTask];
+        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      } catch (error) {
+        console.log('Could not save task:', error);
+      }
+    };
 
-    Alert.alert(
-      'Uppgift sparad!', 
-      `"${taskTitle}" har lagts till för ${taskDate}`,
-      [{ text: 'OK', onPress: () => router.back() }]
-    );
+    saveTask().then(() => {
+      Alert.alert(
+        'Uppgift sparad!', 
+        `"${taskTitle}" har lagts till för ${taskDate}`,
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    });
   };
 
   return (

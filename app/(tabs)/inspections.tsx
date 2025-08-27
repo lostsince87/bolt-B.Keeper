@@ -5,6 +5,7 @@ import { Plus, Search, Calendar, Cloud, FileText, Star, MapPin, ChevronDown, Che
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function InspectionsScreen() {
   const [searchText, setSearchText] = useState('');
@@ -17,58 +18,62 @@ export default function InspectionsScreen() {
 
   useEffect(() => {
     // Load inspections and hives from localStorage
-    try {
-      const savedInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
-      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
+    const loadData = async () => {
+      try {
+        const savedInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
       
-      if (savedInspections.length === 0) {
-        // Default inspections if none saved
-        const defaultInspections = [
-          {
-            id: 1,
-            hive: 'Kupa Alpha',
-            date: '2024-01-15',
-            time: '14:30',
-            weather: 'Soligt, 18°C',
-            duration: '45 min',
-            rating: 5,
-            notes: 'Mycket aktiv samhälle. Drottningen sedd och märkt. God byggtakt på nya ramar.',
-            findings: ['Drottning sedd', 'Yngel i alla stadier', 'Varroa: 1.2/dag (lågt)'],
-          },
-          {
-            id: 2,
-            hive: 'Kupa Beta',
-            date: '2024-01-12',
-            time: '10:15',
-            weather: 'Molnigt, 15°C',
-            duration: '30 min',
-            rating: 4,
-            notes: 'Normalt beteende. Lite varroamiter upptäckta på botten. Planera behandling.',
-            findings: ['Varroa: 3.2/dag (normalt)', 'Honung i övre magasin', 'Behöver mer plats'],
-          },
-          {
-            id: 3,
-            hive: 'Kupa Gamma',
-            date: '2024-01-10',
-            time: '16:00',
-            weather: 'Regnigt, 12°C',
-            duration: '20 min',
-            rating: 2,
-            notes: 'Svag aktivitet. Drottningen inte sedd. Misstänker drottninglöshet.',
-            findings: ['Drottning ej sedd', 'Få bin', 'Varroa: 6.8/dag (högt)'],
-          },
-        ];
-        setInspections(defaultInspections);
-        localStorage.setItem('inspections', JSON.stringify(defaultInspections));
-      } else {
-        setInspections(savedInspections);
+        if (savedInspections.length === 0) {
+          // Default inspections if none saved
+          const defaultInspections = [
+            {
+              id: 1,
+              hive: 'Kupa Alpha',
+              date: '2024-01-15',
+              time: '14:30',
+              weather: 'Soligt, 18°C',
+              duration: '45 min',
+              rating: 5,
+              notes: 'Mycket aktiv samhälle. Drottningen sedd och märkt. God byggtakt på nya ramar.',
+              findings: ['Drottning sedd', 'Yngel i alla stadier', 'Varroa: 1.2/dag (lågt)'],
+            },
+            {
+              id: 2,
+              hive: 'Kupa Beta',
+              date: '2024-01-12',
+              time: '10:15',
+              weather: 'Molnigt, 15°C',
+              duration: '30 min',
+              rating: 4,
+              notes: 'Normalt beteende. Lite varroamiter upptäckta på botten. Planera behandling.',
+              findings: ['Varroa: 3.2/dag (normalt)', 'Honung i övre magasin', 'Behöver mer plats'],
+            },
+            {
+              id: 3,
+              hive: 'Kupa Gamma',
+              date: '2024-01-10',
+              time: '16:00',
+              weather: 'Regnigt, 12°C',
+              duration: '20 min',
+              rating: 2,
+              notes: 'Svag aktivitet. Drottningen inte sedd. Misstänker drottninglöshet.',
+              findings: ['Drottning ej sedd', 'Få bin', 'Varroa: 6.8/dag (högt)'],
+            },
+          ];
+          setInspections(defaultInspections);
+          await AsyncStorage.setItem('inspections', JSON.stringify(defaultInspections));
+        } else {
+          setInspections(savedInspections);
+        }
+      
+        setHives(savedHives);
+      } catch (error) {
+        console.log('Could not load inspections from AsyncStorage:', error);
+        setInspections([]);
       }
-      
-      setHives(savedHives);
-    } catch (error) {
-      console.log('Could not load inspections from localStorage:', error);
-      setInspections([]);
-    }
+    };
+    
+    loadData();
   }, []);
 
   // Get unique locations from hives

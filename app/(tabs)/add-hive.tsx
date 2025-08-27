@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, MapPin, Briefcase, Save, Crown, Scissors } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddHiveScreen() {
   const [hiveName, setHiveName] = useState('');
@@ -82,20 +83,24 @@ export default function AddHiveScreen() {
       ...queenData,
     };
 
-    // Save to localStorage (in real app, save to database)
-    try {
-      const existingHives = JSON.parse(localStorage.getItem('hives') || '[]');
-      const updatedHives = [...existingHives, newHive];
-      localStorage.setItem('hives', JSON.stringify(updatedHives));
-    } catch (error) {
-      console.log('Could not save to localStorage:', error);
-    }
+    // Save to AsyncStorage (in real app, save to database)
+    const saveHive = async () => {
+      try {
+        const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        const updatedHives = [...existingHives, newHive];
+        await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+      } catch (error) {
+        console.log('Could not save to AsyncStorage:', error);
+      }
+    };
 
-    Alert.alert(
-      'Kupa sparad!', 
-      `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}${hasQueen ? ' med drottning' : ''}`,
-      [{ text: 'OK', onPress: () => router.back() }]
-    );
+    saveHive().then(() => {
+      Alert.alert(
+        'Kupa sparad!', 
+        `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}${hasQueen ? ' med drottning' : ''}`,
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    });
   };
 
   return (

@@ -5,75 +5,80 @@ import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTr
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HivesScreen() {
   const [hives, setHives] = useState([]);
 
   useEffect(() => {
     // Load hives from localStorage
-    try {
-      const savedHives = JSON.parse(localStorage.getItem('hives') || '[]');
-      if (savedHives.length === 0) {
-        // Default hives if none saved
-        const defaultHives = [
-          {
-            id: 1,
-            name: 'Kupa Alpha',
-            location: 'Norra ängen',
-            lastInspection: '2024-01-15',
-            status: 'excellent',
-            population: 'Stark',
-            varroa: '1.2/dag',
-            honey: '25 kg',
-            frames: '18/20',
-            hasQueen: true,
-            queenMarked: true,
-            queenColor: 'yellow',
-            queenWingClipped: false,
-            queenAddedDate: '2024-01-01',
-          },
-          {
-            id: 2,
-            name: 'Kupa Beta',
-            location: 'Södra skogen',
-            lastInspection: '2024-01-12',
-            status: 'good',
-            population: 'Medel',
-            varroa: '3.2/dag',
-            honey: '18 kg',
-            frames: '14/20',
-            hasQueen: true,
-            queenMarked: false,
-            queenColor: null,
-            queenWingClipped: true,
-            queenAddedDate: '2023-12-15',
-          },
-          {
-            id: 3,
-            name: 'Kupa Gamma',
-            location: 'Östra fältet',
-            lastInspection: '2024-01-10',
-            status: 'warning',
-            population: 'Svag',
-            varroa: '6.8/dag',
-            honey: '8 kg',
-            frames: '10/20',
-            hasQueen: false,
-            queenMarked: null,
-            queenColor: null,
-            queenWingClipped: null,
-            queenAddedDate: null,
-          },
-        ];
-        setHives(defaultHives);
-        localStorage.setItem('hives', JSON.stringify(defaultHives));
-      } else {
-        setHives(savedHives);
+    const loadHives = async () => {
+      try {
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        if (savedHives.length === 0) {
+          // Default hives if none saved
+          const defaultHives = [
+            {
+              id: 1,
+              name: 'Kupa Alpha',
+              location: 'Norra ängen',
+              lastInspection: '2024-01-15',
+              status: 'excellent',
+              population: 'Stark',
+              varroa: '1.2/dag',
+              honey: '25 kg',
+              frames: '18/20',
+              hasQueen: true,
+              queenMarked: true,
+              queenColor: 'yellow',
+              queenWingClipped: false,
+              queenAddedDate: '2024-01-01',
+            },
+            {
+              id: 2,
+              name: 'Kupa Beta',
+              location: 'Södra skogen',
+              lastInspection: '2024-01-12',
+              status: 'good',
+              population: 'Medel',
+              varroa: '3.2/dag',
+              honey: '18 kg',
+              frames: '14/20',
+              hasQueen: true,
+              queenMarked: false,
+              queenColor: null,
+              queenWingClipped: true,
+              queenAddedDate: '2023-12-15',
+            },
+            {
+              id: 3,
+              name: 'Kupa Gamma',
+              location: 'Östra fältet',
+              lastInspection: '2024-01-10',
+              status: 'warning',
+              population: 'Svag',
+              varroa: '6.8/dag',
+              honey: '8 kg',
+              frames: '10/20',
+              hasQueen: false,
+              queenMarked: null,
+              queenColor: null,
+              queenWingClipped: null,
+              queenAddedDate: null,
+            },
+          ];
+          setHives(defaultHives);
+          await AsyncStorage.setItem('hives', JSON.stringify(defaultHives));
+        } else {
+          setHives(savedHives);
+        }
+      } catch (error) {
+        console.log('Could not load hives from AsyncStorage:', error);
+        setHives([]);
       }
-    } catch (error) {
-      console.log('Could not load hives from localStorage:', error);
-      setHives([]);
-    }
+    };
+    
+    loadHives();
   }, []);
 
   const queenColors = {
@@ -135,16 +140,16 @@ export default function HivesScreen() {
         {
           text: 'Radera',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             try {
               const updatedHives = hives.filter(hive => hive.id !== hiveId);
               setHives(updatedHives);
-              localStorage.setItem('hives', JSON.stringify(updatedHives));
+              await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
               
               // Also remove related inspections
-              const existingInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
+              const existingInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
               const updatedInspections = existingInspections.filter(inspection => inspection.hive !== hiveName);
-              localStorage.setItem('inspections', JSON.stringify(updatedInspections));
+              await AsyncStorage.setItem('inspections', JSON.stringify(updatedInspections));
               
             } catch (error) {
               console.log('Could not delete hive:', error);

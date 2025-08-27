@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud, Snowflake, Shield } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddInspectionScreen() {
   const [selectedHive, setSelectedHive] = useState('');
@@ -143,39 +144,43 @@ export default function AddInspectionScreen() {
       createdAt: new Date().toISOString(),
     };
 
-    // Save inspection to localStorage
-    try {
-      const existingInspections = JSON.parse(localStorage.getItem('inspections') || '[]');
-      const updatedInspections = [...existingInspections, newInspection];
-      localStorage.setItem('inspections', JSON.stringify(updatedInspections));
+    // Save inspection to AsyncStorage
+    const saveInspection = async () => {
+      try {
+        const existingInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        const updatedInspections = [...existingInspections, newInspection];
+        await AsyncStorage.setItem('inspections', JSON.stringify(updatedInspections));
 
-      // If new queen was added, update the hive data
-      if (newQueenAdded) {
-        const existingHives = JSON.parse(localStorage.getItem('hives') || '[]');
-        const updatedHives = existingHives.map(hive => {
-          if (hive.name === selectedHive) {
-            return {
-              ...hive,
-              hasQueen: true,
-              queenMarked: newQueenMarked,
-              queenColor: newQueenMarked ? newQueenColor : null,
-              queenWingClipped: newQueenWingClipped,
-              queenAddedDate: new Date().toISOString(),
-            };
-          }
-          return hive;
-        });
-        localStorage.setItem('hives', JSON.stringify(updatedHives));
+        // If new queen was added, update the hive data
+        if (newQueenAdded) {
+          const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+          const updatedHives = existingHives.map(hive => {
+            if (hive.name === selectedHive) {
+              return {
+                ...hive,
+                hasQueen: true,
+                queenMarked: newQueenMarked,
+                queenColor: newQueenMarked ? newQueenColor : null,
+                queenWingClipped: newQueenWingClipped,
+                queenAddedDate: new Date().toISOString(),
+              };
+            }
+            return hive;
+          });
+          await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+        }
+      } catch (error) {
+        console.log('Could not save inspection:', error);
       }
-    } catch (error) {
-      console.log('Could not save inspection:', error);
-    }
+    };
 
-    Alert.alert(
-      'Inspektion sparad!', 
-      `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
-      [{ text: 'OK', onPress: () => router.back() }]
-    );
+    saveInspection().then(() => {
+      Alert.alert(
+        'Inspektion sparad!', 
+        `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    });
   };
 
   return (
