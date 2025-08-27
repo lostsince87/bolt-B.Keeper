@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
-import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus } from 'lucide-react-native';
+import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus, Bug, Thermometer, Crown, Scissors, Shield, Snowflake, BarChart3, Eye } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { BeehiveIcon } from '@/components/BeehiveIcon';
@@ -12,6 +12,8 @@ export default function HomeScreen() {
   const [showStatsSelector, setShowStatsSelector] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [hives, setHives] = useState([]);
+  const [selectedQuickActions, setSelectedQuickActions] = useState(['new-inspection', 'new-harvest', 'new-hive', 'varroa-check']);
+  const [showQuickActionsSelector, setShowQuickActionsSelector] = useState(false);
 
   useEffect(() => {
     // Load data from localStorage
@@ -47,6 +49,12 @@ export default function HomeScreen() {
         setHives(defaultHiveData);
       } else {
         setHives(savedHives);
+      }
+
+      // Load quick actions preferences
+      const savedQuickActions = JSON.parse(localStorage.getItem('quickActions') || '[]');
+      if (savedQuickActions.length > 0) {
+        setSelectedQuickActions(savedQuickActions);
       }
     } catch (error) {
       console.log('Could not load data from localStorage:', error);
@@ -110,7 +118,95 @@ export default function HomeScreen() {
     },
   ];
 
+  const allQuickActions = [
+    { 
+      id: 'new-inspection',
+      title: 'Ny inspektion', 
+      icon: Briefcase, 
+      color: '#FF8C42',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'new-harvest',
+      title: 'Registrera skörd', 
+      icon: Droplets, 
+      color: '#F7B801',
+      route: '/add-harvest'
+    },
+    { 
+      id: 'new-hive',
+      title: 'Lägg till kupa', 
+      icon: BeehiveIcon, 
+      color: '#8FBC8F',
+      route: '/add-hive'
+    },
+    { 
+      id: 'varroa-check',
+      title: 'Varroa-kontroll', 
+      icon: Bug, 
+      color: '#E74C3C',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'temperature-log',
+      title: 'Temperaturlogg', 
+      icon: Thermometer, 
+      color: '#8B7355',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'queen-marking',
+      title: 'Märk drottning', 
+      icon: Crown, 
+      color: '#F7B801',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'wing-clipping',
+      title: 'Vingklippning', 
+      icon: Scissors, 
+      color: '#8B4513',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'treatment',
+      title: 'Varroabehandling', 
+      icon: Shield, 
+      color: '#E74C3C',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'wintering',
+      title: 'Invintring', 
+      icon: Snowflake, 
+      color: '#8FBC8F',
+      route: '/add-inspection'
+    },
+    { 
+      id: 'statistics',
+      title: 'Visa statistik', 
+      icon: BarChart3, 
+      color: '#8B7355',
+      route: '/statistics'
+    },
+    { 
+      id: 'hive-overview',
+      title: 'Kupöversikt', 
+      icon: Eye, 
+      color: '#FF8C42',
+      route: '/hives'
+    },
+    { 
+      id: 'new-task',
+      title: 'Ny uppgift', 
+      icon: Plus, 
+      color: '#8B4513',
+      route: '/add-task'
+    },
+  ];
+
   const availableStats = quickStats.filter(stat => selectedStats.includes(stat.id));
+  const availableQuickActions = allQuickActions.filter(action => selectedQuickActions.includes(action.id));
 
   const toggleStatSelection = (statId: string) => {
     setSelectedStats(prev => 
@@ -118,6 +214,21 @@ export default function HomeScreen() {
         ? prev.filter(id => id !== statId)
         : [...prev, statId]
     );
+  };
+
+  const toggleQuickActionSelection = (actionId: string) => {
+    const newSelection = selectedQuickActions.includes(actionId) 
+      ? selectedQuickActions.filter(id => id !== actionId)
+      : [...selectedQuickActions, actionId];
+    
+    setSelectedQuickActions(newSelection);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem('quickActions', JSON.stringify(newSelection));
+    } catch (error) {
+      console.log('Could not save quick actions:', error);
+    }
   };
 
   return (
@@ -217,21 +328,52 @@ export default function HomeScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Snabbåtgärder</Text>
+            <View style={styles.sectionHeader}>
+              <TouchableOpacity 
+                style={styles.settingsButton}
+                onPress={() => setShowQuickActionsSelector(!showQuickActionsSelector)}
+              >
+                <Settings size={20} color="#8B4513" />
+              </TouchableOpacity>
+            </View>
+
+            {showQuickActionsSelector && (
+              <View style={styles.quickActionsSelector}>
+                <Text style={styles.quickActionsSelectorTitle}>Välj snabbåtgärder att visa:</Text>
+                <View style={styles.quickActionsOptions}>
+                  {allQuickActions.map((action) => (
+                    <TouchableOpacity
+                      key={action.id}
+                      style={[
+                        styles.quickActionsOption,
+                        selectedQuickActions.includes(action.id) && styles.quickActionsOptionSelected
+                      ]}
+                      onPress={() => toggleQuickActionSelection(action.id)}
+                    >
+                      <action.icon size={16} color={selectedQuickActions.includes(action.id) ? 'white' : action.color} />
+                      <Text style={[
+                        styles.quickActionsOptionText,
+                        selectedQuickActions.includes(action.id) && styles.quickActionsOptionTextSelected
+                      ]}>
+                        {action.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <View style={styles.quickActions}>
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: '#FF8C42' }]}
-                onPress={() => router.push('/add-inspection')}
-              >
-                <Briefcase size={24} color="white" />
-                <Text style={styles.actionText}>Ny inspektion</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: '#F7B801' }]}
-                onPress={() => router.push('/add-harvest')}
-              >
-                <Droplets size={24} color="white" />
-                <Text style={styles.actionText}>Registrera skattning</Text>
-              </TouchableOpacity>
+              {availableQuickActions.map((action) => (
+                <TouchableOpacity 
+                  key={action.id}
+                  style={[styles.actionButton, { backgroundColor: action.color }]}
+                  onPress={() => router.push(action.route)}
+                >
+                  <action.icon size={20} color="white" />
+                  <Text style={styles.actionText}>{action.title}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         </ScrollView>
@@ -426,21 +568,71 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   actionButton: {
-    flex: 1,
+    minWidth: '48%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    marginHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   actionText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
+    textAlign: 'center',
+  },
+  quickActionsSelector: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  quickActionsSelectorTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B4513',
+    marginBottom: 12,
+  },
+  quickActionsOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  quickActionsOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5DC',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  quickActionsOptionSelected: {
+    backgroundColor: '#8FBC8F',
+  },
+  quickActionsOptionText: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginLeft: 6,
+    fontWeight: '600',
+  },
+  quickActionsOptionTextSelected: {
+    color: 'white',
   },
 });
