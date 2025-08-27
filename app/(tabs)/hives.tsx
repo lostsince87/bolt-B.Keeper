@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2 } from 'lucide-react-native';
+import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HivesScreen() {
   const [hives, setHives] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
     // Load hives from localStorage
@@ -160,6 +161,22 @@ export default function HivesScreen() {
     );
   };
 
+  // Get unique locations from hives
+  const locations = [...new Set(hives.map(hive => hive.location))];
+  
+  // Get hives for selected location
+  const hivesInLocation = selectedLocation 
+    ? hives.filter(hive => hive.location === selectedLocation)
+    : [];
+
+  const handleLocationPress = (location: string) => {
+    setSelectedLocation(location);
+  };
+
+  const handleBackToLocations = () => {
+    setSelectedLocation('');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -167,89 +184,144 @@ export default function HivesScreen() {
         style={styles.gradient}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Mina kupor</Text>
+          <View style={styles.headerLeft}>
+            {selectedLocation && (
+              <TouchableOpacity style={styles.backToLocationsButton} onPress={handleBackToLocations}>
+                <Text style={styles.backToLocationsText}>← Platser</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.title}>
+              {selectedLocation ? selectedLocation : 'Mina kupor'}
+            </Text>
+          </View>
           <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-hive')}>
             <Plus size={24} color="white" />
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {hives.map((hive) => (
-            <TouchableOpacity 
-              key={hive.id} 
-              style={styles.hiveCard}
-              onPress={() => router.push({
-                pathname: '/hive-details',
-                params: { hiveId: hive.id }
+          {!selectedLocation ? (
+            // Show locations
+            <>
+              {locations.map((location) => {
+                const hivesAtLocation = hives.filter(hive => hive.location === location);
+                return (
+                  <TouchableOpacity 
+                    key={location} 
+                    style={styles.locationCard}
+                    onPress={() => handleLocationPress(location)}
+                  >
+                    <View style={styles.locationHeader}>
+                      <View>
+                        <Text style={styles.locationName}>{location}</Text>
+                        <Text style={styles.locationCount}>
+                          {hivesAtLocation.length} kup{hivesAtLocation.length !== 1 ? 'or' : 'a'}
+                        </Text>
+                      </View>
+                      <ChevronRight size={24} color="#8B7355" />
+                    </View>
+                    
+                    <View style={styles.locationStats}>
+                      {hivesAtLocation.slice(0, 3).map((hive, index) => (
+                        <View key={hive.id} style={styles.locationHivePreview}>
+                          <Text style={styles.previewHiveName}>{hive.name}</Text>
+                          <View style={[styles.previewStatus, { backgroundColor: getStatusColor(hive.status) }]} />
+                        </View>
+                      ))}
+                      {hivesAtLocation.length > 3 && (
+                        <Text style={styles.moreHives}>+{hivesAtLocation.length - 3} till</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
               })}
-            >
-              <View style={styles.hiveHeader}>
-                <View>
-                  <Text style={styles.hiveName}>{hive.name}</Text>
-                  <View style={styles.locationRow}>
-                    <MapPin size={14} color="#8B7355" />
-                    <Text style={styles.location}>{hive.location}</Text>
-                    {hive.hasQueen && (
-                      <View style={styles.queenInfo}>
-                        <Crown 
-                          size={14} 
-                          color={hive.queenMarked && hive.queenColor ? queenColors[hive.queenColor] : '#F7B801'} 
-                          fill={hive.queenMarked && hive.queenColor ? queenColors[hive.queenColor] : '#F7B801'}
-                        />
-                        {hive.queenWingClipped && (
-                          <Scissors size={12} color="#8B7355" style={{ marginLeft: 4 }} />
+              
+              <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
+                <Plus size={32} color="#8B7355" />
+                <Text style={styles.addHiveText}>Lägg till ny kupa</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            // Show hives for selected location
+            <>
+              {hivesInLocation.map((hive) => (
+                <TouchableOpacity 
+                  key={hive.id} 
+                  style={styles.hiveCard}
+                  onPress={() => router.push({
+                    pathname: '/hive-details',
+                    params: { hiveId: hive.id }
+                  })}
+                >
+                  <View style={styles.hiveHeader}>
+                    <View>
+                      <Text style={styles.hiveName}>{hive.name}</Text>
+                      <View style={styles.locationRow}>
+                        <MapPin size={14} color="#8B7355" />
+                        <Text style={styles.location}>{hive.location}</Text>
+                        {hive.hasQueen && (
+                          <View style={styles.queenInfo}>
+                            <Crown 
+                              size={14} 
+                              color={hive.queenMarked && hive.queenColor ? queenColors[hive.queenColor] : '#F7B801'} 
+                              fill={hive.queenMarked && hive.queenColor ? queenColors[hive.queenColor] : '#F7B801'}
+                            />
+                            {hive.queenWingClipped && (
+                              <Scissors size={12} color="#8B7355" style={{ marginLeft: 4 }} />
+                            )}
+                          </View>
                         )}
                       </View>
-                    )}
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(hive.status) + '20' }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(hive.status) }]}>
+                        {getStatusText(hive.status)}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(hive.status) + '20' }]}>
-                  <Text style={[styles.statusText, { color: getStatusColor(hive.status) }]}>
-                    {getStatusText(hive.status)}
-                  </Text>
-                </View>
-              </View>
 
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Activity size={16} color="#8B7355" />
-                  <Text style={styles.statLabel}>Population</Text>
-                  <Text style={styles.statValue}>{hive.population}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <AlertTriangle size={16} color="#E74C3C" />
-                  <Text style={styles.statLabel}>Varroa</Text>
-                  <Text style={[styles.statValue, { color: parseFloat(hive.varroa) > 5 ? '#E74C3C' : parseFloat(hive.varroa) > 2 ? '#FF8C42' : '#8FBC8F' }]}>
-                    {hive.varroa}
-                  </Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Droplets size={16} color="#F7B801" />
-                  <Text style={styles.statLabel}>Honung</Text>
-                  <Text style={styles.statValue}>{hive.honey}</Text>
-                </View>
-              </View>
+                  <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                      <Activity size={16} color="#8B7355" />
+                      <Text style={styles.statLabel}>Population</Text>
+                      <Text style={styles.statValue}>{hive.population}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <AlertTriangle size={16} color="#E74C3C" />
+                      <Text style={styles.statLabel}>Varroa</Text>
+                      <Text style={[styles.statValue, { color: parseFloat(hive.varroa) > 5 ? '#E74C3C' : parseFloat(hive.varroa) > 2 ? '#FF8C42' : '#8FBC8F' }]}>
+                        {hive.varroa}
+                      </Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Droplets size={16} color="#F7B801" />
+                      <Text style={styles.statLabel}>Honung</Text>
+                      <Text style={styles.statValue}>{hive.honey}</Text>
+                    </View>
+                  </View>
 
-              <View style={styles.hiveFooter}>
-                <Text style={styles.lastInspection}>
-                  Senaste inspektion: {hive.lastInspection}
-                </Text>
-                <View style={styles.footerRight}>
-                  <Text style={styles.frames}>Ramar: {hive.frames}</Text>
-                  {hive.hasQueen && hive.queenAddedDate && (
-                    <Text style={styles.queenAge}>
-                      Drottning: {calculateQueenAge(hive.queenAddedDate)}
+                  <View style={styles.hiveFooter}>
+                    <Text style={styles.lastInspection}>
+                      Senaste inspektion: {hive.lastInspection}
                     </Text>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-
-          <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
-            <Plus size={32} color="#8B7355" />
-            <Text style={styles.addHiveText}>Lägg till ny kupa</Text>
-          </TouchableOpacity>
+                    <View style={styles.footerRight}>
+                      <Text style={styles.frames}>Ramar: {hive.frames}</Text>
+                      {hive.hasQueen && hive.queenAddedDate && (
+                        <Text style={styles.queenAge}>
+                          Drottning: {calculateQueenAge(hive.queenAddedDate)}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              
+              <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
+                <Plus size={32} color="#8B7355" />
+                <Text style={styles.addHiveText}>Lägg till ny kupa</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
@@ -270,6 +342,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  backToLocationsButton: {
+    marginBottom: 4,
+  },
+  backToLocationsText: {
+    fontSize: 14,
+    color: '#8B7355',
+    fontWeight: '600',
   },
   title: {
     fontSize: 28,
@@ -400,5 +483,60 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     marginTop: 8,
     fontWeight: '600',
+  },
+  locationCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  locationName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 4,
+  },
+  locationCount: {
+    fontSize: 14,
+    color: '#8B7355',
+  },
+  locationStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  locationHivePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  previewHiveName: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginRight: 8,
+  },
+  previewStatus: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  moreHives: {
+    fontSize: 12,
+    color: '#8B7355',
+    fontStyle: 'italic',
   },
 });

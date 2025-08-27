@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'react-native';
-import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Settings, Activity, Plus, Bug, Thermometer, Crown, Scissors, Shield, Snowflake, ChartBar as BarChart3, Eye } from 'lucide-react-native';
+import { Briefcase, FileText, Droplets, TrendingUp, CircleAlert as AlertCircle, Calendar, Activity, Plus, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { BeehiveIcon } from '@/components/BeehiveIcon';
@@ -10,11 +10,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
   const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
-  const [showStatsSelector, setShowStatsSelector] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [hives, setHives] = useState([]);
-  const [selectedQuickActions, setSelectedQuickActions] = useState(['new-inspection', 'new-harvest', 'new-hive', 'varroa-check']);
-  const [showQuickActionsSelector, setShowQuickActionsSelector] = useState(false);
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   useEffect(() => {
     // Load data from localStorage
@@ -52,12 +50,6 @@ export default function HomeScreen() {
         } else {
           setHives(savedHives);
         }
-
-        // Load quick actions preferences
-        const savedQuickActions = JSON.parse(await AsyncStorage.getItem('quickActions') || '[]');
-        if (savedQuickActions.length > 0) {
-          setSelectedQuickActions(savedQuickActions);
-        }
       } catch (error) {
         console.log('Could not load data from AsyncStorage:', error);
       }
@@ -85,7 +77,7 @@ export default function HomeScreen() {
     return (totalVarroa / hives.length).toFixed(1);
   };
 
-  const quickStats = [
+  const allStats = [
     { 
       id: 'hives',
       title: 'Aktiva kupor', 
@@ -123,121 +115,42 @@ export default function HomeScreen() {
     },
   ];
 
-  const allQuickActions = [
+  const quickActions = [
     { 
-      id: 'new-inspection',
-      title: 'Ny inspektion', 
-      icon: Briefcase, 
-      color: '#FF8C42',
-      route: '/add-inspection'
-    },
-    { 
-      id: 'new-harvest',
-      title: 'Registrera skörd', 
-      icon: Droplets, 
+      id: 'harvest',
+      title: 'Skattning',
+      icon: Droplets,
       color: '#F7B801',
       route: '/add-harvest'
     },
-    { 
-      id: 'new-hive',
-      title: 'Lägg till kupa', 
-      icon: BeehiveIcon, 
-      color: '#8FBC8F',
+    {
+      id: 'hive',
+      title: 'Ny kupa',
+      icon: BeehiveIcon,
+      color: '#FF8C42',
       route: '/add-hive'
     },
-    { 
-      id: 'varroa-check',
-      title: 'Varroa-kontroll', 
-      icon: Bug, 
-      color: '#E74C3C',
-      route: '/add-inspection'
-    },
-    { 
-      id: 'temperature-log',
-      title: 'Temperaturlogg', 
-      icon: Thermometer, 
-      color: '#8B7355',
-      route: '/add-inspection'
-    },
-    { 
-      id: 'queen-marking',
-      title: 'Märk drottning', 
-      icon: Crown, 
-      color: '#F7B801',
-      route: '/add-inspection'
-    },
-    { 
-      id: 'wing-clipping',
-      title: 'Vingklippning', 
-      icon: Scissors, 
-      color: '#8B4513',
-      route: '/add-inspection'
-    },
-    { 
-      id: 'treatment',
-      title: 'Varroabehandling', 
-      icon: Shield, 
-      color: '#E74C3C',
-      route: '/add-inspection'
-    },
-    { 
-      id: 'wintering',
-      title: 'Invintring', 
-      icon: Snowflake, 
+    {
+      id: 'inspection',
+      title: 'Inspektion',
+      icon: FileText,
       color: '#8FBC8F',
       route: '/add-inspection'
     },
-    { 
-      id: 'statistics',
-      title: 'Visa statistik', 
-      icon: BarChart3, 
-      color: '#8B7355',
-      route: '/statistics'
-    },
-    { 
-      id: 'hive-overview',
-      title: 'Kupöversikt', 
-      icon: Eye, 
-      color: '#FF8C42',
-      route: '/hives'
-    },
-    { 
-      id: 'new-task',
-      title: 'Ny uppgift', 
-      icon: Plus, 
-      color: '#8B4513',
+    {
+      id: 'task',
+      title: 'Ny uppgift',
+      icon: Plus,
+      color: '#E74C3C',
       route: '/add-task'
     },
   ];
 
-  const availableStats = quickStats.filter(stat => selectedStats.includes(stat.id));
-  const availableQuickActions = allQuickActions.filter(action => selectedQuickActions.includes(action.id));
+  const availableStats = allStats.filter(stat => selectedStats.includes(stat.id));
 
-  const toggleStatSelection = (statId: string) => {
-    setSelectedStats(prev => 
-      prev.includes(statId) 
-        ? prev.filter(id => id !== statId)
-        : [...prev, statId]
-    );
-  };
-
-  const toggleQuickActionSelection = (actionId: string) => {
-    const newSelection = selectedQuickActions.includes(actionId) 
-      ? selectedQuickActions.filter(id => id !== actionId)
-      : [...selectedQuickActions, actionId];
-    
-    setSelectedQuickActions(newSelection);
-    
-    // Save to localStorage
-    const saveQuickActions = async () => {
-      try {
-        await AsyncStorage.setItem('quickActions', JSON.stringify(newSelection));
-      } catch (error) {
-        console.log('Could not save quick actions:', error);
-      }
-    };
-    
-    saveQuickActions();
+  const handleActionPress = (route: string) => {
+    setShowActionMenu(false);
+    router.push(route);
   };
 
   return (
@@ -258,41 +171,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Snabbstatistik</Text>
-              <TouchableOpacity 
-                style={styles.settingsButton}
-                onPress={() => setShowStatsSelector(!showStatsSelector)}
-              >
-                <Settings size={20} color="#8B4513" />
-              </TouchableOpacity>
-            </View>
-
-            {showStatsSelector && (
-              <View style={styles.statsSelector}>
-                <Text style={styles.statsSelectorTitle}>Välj statistiker att visa:</Text>
-                <View style={styles.statsOptions}>
-                  {quickStats.map((stat) => (
-                    <TouchableOpacity
-                      key={stat.id}
-                      style={[
-                        styles.statsOption,
-                        selectedStats.includes(stat.id) && styles.statsOptionSelected
-                      ]}
-                      onPress={() => toggleStatSelection(stat.id)}
-                    >
-                      <stat.icon size={16} color={selectedStats.includes(stat.id) ? 'white' : '#8B7355'} />
-                      <Text style={[
-                        styles.statsOptionText,
-                        selectedStats.includes(stat.id) && styles.statsOptionTextSelected
-                      ]}>
-                        {stat.title}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
+            <Text style={styles.sectionTitle}>Snabbstatistik</Text>
 
             <View style={styles.statsGrid}>
               {availableStats.map((stat, index) => (
@@ -336,53 +215,32 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Snabbåtgärder</Text>
+            <View style={styles.actionMenuContainer}>
               <TouchableOpacity 
-                style={styles.settingsButton}
-                onPress={() => setShowQuickActionsSelector(!showQuickActionsSelector)}
+                style={styles.plusButton}
+                onPress={() => setShowActionMenu(!showActionMenu)}
               >
-                <Settings size={20} color="#8B4513" />
+                {showActionMenu ? (
+                  <X size={32} color="white" />
+                ) : (
+                  <Plus size={32} color="white" />
+                )}
               </TouchableOpacity>
-            </View>
-
-            {showQuickActionsSelector && (
-              <View style={styles.quickActionsSelector}>
-                <Text style={styles.quickActionsSelectorTitle}>Välj snabbåtgärder att visa:</Text>
-                <View style={styles.quickActionsOptions}>
-                  {allQuickActions.map((action) => (
+              
+              {showActionMenu && (
+                <View style={styles.actionMenu}>
+                  {quickActions.map((action) => (
                     <TouchableOpacity
                       key={action.id}
-                      style={[
-                        styles.quickActionsOption,
-                        selectedQuickActions.includes(action.id) && styles.quickActionsOptionSelected
-                      ]}
-                      onPress={() => toggleQuickActionSelection(action.id)}
+                      style={[styles.actionMenuItem, { backgroundColor: action.color }]}
+                      onPress={() => handleActionPress(action.route)}
                     >
-                      <action.icon size={16} color={selectedQuickActions.includes(action.id) ? 'white' : action.color} />
-                      <Text style={[
-                        styles.quickActionsOptionText,
-                        selectedQuickActions.includes(action.id) && styles.quickActionsOptionTextSelected
-                      ]}>
-                        {action.title}
-                      </Text>
+                      <action.icon size={24} color="white" />
+                      <Text style={styles.actionMenuText}>{action.title}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-              </View>
-            )}
-
-            <View style={styles.quickActions}>
-              {availableQuickActions.map((action) => (
-                <TouchableOpacity 
-                  key={action.id}
-                  style={[styles.actionButton, { backgroundColor: action.color }]}
-                  onPress={() => router.push(action.route)}
-                >
-                  <action.icon size={20} color="white" />
-                  <Text style={styles.actionText}>{action.title}</Text>
-                </TouchableOpacity>
-              ))}
+              )}
             </View>
           </View>
         </ScrollView>
@@ -420,25 +278,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#8B4513',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 15,
-  },
-  settingsButton: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   addTaskButton: {
     backgroundColor: '#8FBC8F',
@@ -452,49 +292,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-  },
-  statsSelector: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statsSelectorTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#8B4513',
-    marginBottom: 12,
-  },
-  statsOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  statsOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5DC',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
-  },
-  statsOptionSelected: {
-    backgroundColor: '#F7B801',
-  },
-  statsOptionText: {
-    fontSize: 12,
-    color: '#8B7355',
-    marginLeft: 6,
-    fontWeight: '600',
-  },
-  statsOptionTextSelected: {
-    color: 'white',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -575,73 +372,45 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  quickActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  actionMenuContainer: {
+    alignItems: 'center',
+    position: 'relative',
   },
-  actionButton: {
-    minWidth: '48%',
-    flexDirection: 'row',
+  plusButton: {
+    backgroundColor: '#F7B801',
+    borderRadius: 35,
+    width: 70,
+    height: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  actionText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
-    textAlign: 'center',
+  actionMenu: {
+    position: 'absolute',
+    bottom: 80,
+    alignItems: 'center',
+    gap: 12,
   },
-  quickActionsSelector: {
-    backgroundColor: 'white',
+  actionMenuItem: {
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  quickActionsSelectorTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#8B4513',
-    marginBottom: 12,
-  },
-  quickActionsOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  quickActionsOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5DC',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
+    padding: 16,
+    minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  quickActionsOptionSelected: {
-    backgroundColor: '#8FBC8F',
-  },
-  quickActionsOptionText: {
-    fontSize: 12,
-    color: '#8B7355',
-    marginLeft: 6,
-    fontWeight: '600',
-  },
-  quickActionsOptionTextSelected: {
+  actionMenuText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 12,
   },
 });
