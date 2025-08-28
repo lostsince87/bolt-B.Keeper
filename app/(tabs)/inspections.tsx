@@ -228,7 +228,7 @@ export default function InspectionsScreen() {
                 style={styles.inspectionCard}
                 onPress={() => handleInspectionPress(inspection)}
               >
-              <View style={styles.inspectionHeader}>
+                <View style={styles.inspectionHeader}>
                 <View>
                   <Text style={styles.hiveName}>{inspection.hive}</Text>
                   <View style={styles.dateRow}>
@@ -243,14 +243,14 @@ export default function InspectionsScreen() {
                   </View>
                   <Text style={styles.duration}>{inspection.duration}</Text>
                 </View>
-              </View>
+                </View>
 
-              <View style={styles.weatherRow}>
+                <View style={styles.weatherRow}>
                 <Cloud size={16} color="#8B7355" />
                 <Text style={styles.weather}>{inspection.weather}</Text>
-              </View>
+                </View>
 
-              <View style={styles.findingsContainer}>
+                <View style={styles.findingsContainer}>
                 <Text style={styles.findingsTitle}>Iakttagelser:</Text>
                 <View style={styles.findingsList}>
                   {inspection.findings.map((finding, index) => (
@@ -260,15 +260,15 @@ export default function InspectionsScreen() {
                     </View>
                   ))}
                 </View>
-              </View>
+                </View>
 
-              <View style={styles.notesContainer}>
+                <View style={styles.notesContainer}>
                 <View style={styles.notesHeader}>
                   <FileText size={16} color="#8B7355" />
                   <Text style={styles.notesTitle}>Anteckningar:</Text>
                 </View>
                 <Text style={styles.notes}>{inspection.notes}</Text>
-              </View>
+                </View>
               </TouchableOpacity>
             ))
           )}
