@@ -32,7 +32,7 @@
     "expo-system-ui": "~5.0.5",
     "expo-web-browser": "~14.1.5",
     "lucide-react-native": "^0.475.0",
-    "metro": "^0.83.1",
+    "metro": "0.80.12",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.6",
