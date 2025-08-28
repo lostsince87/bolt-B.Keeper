@@ -257,7 +257,6 @@ export default function HivesScreen() {
                         <Text style={styles.locationCount}>
                           {hivesAtLocation.length} kup{hivesAtLocation.length !== 1 ? 'or' : 'a'}
                         </Text>
-                        {/* Visa indikatorer för speciella kupor på denna plats */}
                         <View style={styles.hiveIndicators}>
                           {hivesAtLocation.some(hive => hive.isNucleus) && (
                             <View style={styles.indicator}>
@@ -278,7 +277,6 @@ export default function HivesScreen() {
                       </View>
                       <ChevronRight size={24} color="#8B7355" />
                     </View>
-                    
                     <View style={styles.locationStats}>
                       {hivesAtLocation.slice(0, 3).map((hive, index) => (
                         <View key={hive.id} style={styles.locationHivePreview}>
@@ -293,7 +291,6 @@ export default function HivesScreen() {
                   </TouchableOpacity>
                 );
               })}
-              
               <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
                 <Plus size={32} color="#8B7355" />
                 <Text style={styles.addHiveText}>Lägg till ny kupa</Text>
@@ -373,7 +370,6 @@ export default function HivesScreen() {
                   </View>
                 </TouchableOpacity>
               ))}
-              
               <TouchableOpacity style={styles.addHiveCard} onPress={() => router.push('/add-hive')}>
                 <Plus size={32} color="#8B7355" />
                 <Text style={styles.addHiveText}>Lägg till ny kupa</Text>
