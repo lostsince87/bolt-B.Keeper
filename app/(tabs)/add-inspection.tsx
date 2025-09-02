@@ -901,6 +901,7 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     marginLeft: 8,
     textAlign: 'center',
+    flex: 1,
     flexShrink: 1,
   },
   specialActionTextActive: {
