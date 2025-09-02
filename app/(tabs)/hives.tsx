@@ -93,6 +93,8 @@ export default function HivesScreen() {
               queenColor: 'yellow',
               queenWingClipped: false,
               queenAddedDate: '2024-01-01',
+              isNucleus: false,
+              isWintered: false,
             },
             {
               id: 2,
@@ -109,6 +111,8 @@ export default function HivesScreen() {
               queenColor: null,
               queenWingClipped: true,
               queenAddedDate: '2023-12-15',
+              isNucleus: false,
+              isWintered: true,
             },
             {
               id: 3,
@@ -125,6 +129,8 @@ export default function HivesScreen() {
               queenColor: null,
               queenWingClipped: null,
               queenAddedDate: null,
+              isNucleus: false,
+              isWintered: false,
             },
           ];
           setHives(defaultHives);
