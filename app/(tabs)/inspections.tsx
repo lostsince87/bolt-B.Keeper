@@ -229,15 +229,15 @@ export default function InspectionsScreen() {
                 onPress={() => handleInspectionPress(inspection)}
               >
                 <View style={styles.inspectionHeader}>
-                <View>
+                  <View>
                   <Text style={styles.hiveName}>{inspection.hive}</Text>
                   <View style={styles.dateRow}>
                     <Calendar size={14} color="#8B7355" />
                     <Text style={styles.date}>{inspection.date}</Text>
                     <Text style={styles.time}>{inspection.time}</Text>
                   </View>
-                </View>
-                <View style={styles.ratingContainer}>
+                  </View>
+                  <View style={styles.ratingContainer}>
                   <View style={styles.starsRow}>
                     {renderStars(inspection.rating)}
                   </View>
@@ -251,23 +251,23 @@ export default function InspectionsScreen() {
                 </View>
 
                 <View style={styles.findingsContainer}>
-                <Text style={styles.findingsTitle}>Iakttagelser:</Text>
-                <View style={styles.findingsList}>
+                  <Text style={styles.findingsTitle}>Iakttagelser:</Text>
+                  <View style={styles.findingsList}>
                   {inspection.findings.map((finding, index) => (
                     <View key={index} style={styles.findingItem}>
                       <View style={styles.findingDot} />
                       <Text style={styles.findingText}>{finding}</Text>
                     </View>
                   ))}
-                </View>
+                  </View>
                 </View>
 
                 <View style={styles.notesContainer}>
-                <View style={styles.notesHeader}>
-                  <FileText size={16} color="#8B7355" />
+                  <View style={styles.notesHeader}>
+                  <Text style={styles.weather}>{inspection.weather}</Text>
                   <Text style={styles.notesTitle}>Anteckningar:</Text>
-                </View>
-                <Text style={styles.notes}>{inspection.notes}</Text>
+                  </View>
+                  <Text style={styles.notes}>{inspection.notes}</Text>
                 </View>
               </TouchableOpacity>
             ))
