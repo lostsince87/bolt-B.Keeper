@@ -896,10 +896,12 @@ const styles = StyleSheet.create({
     borderColor: '#8FBC8F',
   },
   specialActionText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#8B7355',
     marginLeft: 8,
+    textAlign: 'center',
+    flexShrink: 1,
   },
   specialActionTextActive: {
     color: 'white',
