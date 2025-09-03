@@ -36,6 +36,7 @@ export default function InspectionsScreen() {
               rating: 5,
               notes: 'Mycket aktiv samhälle. Drottningen sedd och märkt. God byggtakt på nya ramar.',
               findings: ['Drottning sedd', 'Yngel i alla stadier', 'Varroa: 1.2/dag (lågt)'],
+              observations: ['queen-laying', 'brood-pattern', 'brood-stages', 'pop-strong', 'honey-stores'],
             },
             {
               id: 2,
@@ -47,6 +48,7 @@ export default function InspectionsScreen() {
               rating: 4,
               notes: 'Normalt beteende. Lite varroamiter upptäckta på botten. Planera behandling.',
               findings: ['Varroa: 3.2/dag (normalt)', 'Honung i övre magasin', 'Behöver mer plats'],
+              observations: ['queen-laying', 'honey-stores', 'space-needed', 'varroa-low'],
             },
             {
               id: 3,
@@ -58,6 +60,7 @@ export default function InspectionsScreen() {
               rating: 2,
               notes: 'Svag aktivitet. Drottningen inte sedd. Misstänker drottninglöshet.',
               findings: ['Drottning ej sedd', 'Få bin', 'Varroa: 6.8/dag (högt)'],
+              observations: ['pop-weak', 'varroa-high', 'honey-low'],
             },
           ];
           setInspections(defaultInspections);

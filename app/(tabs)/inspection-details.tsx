@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Thermometer, Cloud, Crown, Scissors, Bug, Activity, Layers, FileText, CreditCard as Edit, Snowflake, Shield } from 'lucide-react-native';
+import { Eye, Heart, Zap, Droplets, AlertTriangle, CheckCircle } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { router, useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -49,6 +50,59 @@ export default function InspectionDetailsScreen() {
       case 'lågt': return '#8FBC8F';
       case 'normalt': return '#F7B801';
       case 'högt': return '#E74C3C';
+      default: return '#8B7355';
+    }
+  };
+
+  // Få observationstext baserat på ID
+  const getObservationText = (observationId: string) => {
+    const allObservations = [
+      // Drottning
+      { id: 'queen-laying', text: 'Aktiv äggläggning', severity: 'good', category: 'Drottning' },
+      { id: 'queen-marked', text: 'Märkt drottning', severity: 'neutral', category: 'Drottning' },
+      { id: 'queen-old', text: 'Gammal drottning', severity: 'warning', category: 'Drottning' },
+      { id: 'queen-supersedure', text: 'Avlösningsceller', severity: 'warning', category: 'Drottning' },
+      { id: 'queen-cells', text: 'Svärmceller', severity: 'critical', category: 'Drottning' },
+      // Yngel
+      { id: 'brood-pattern', text: 'Bra yngelmönster', severity: 'good', category: 'Yngel' },
+      { id: 'brood-stages', text: 'Alla yngelstadier', severity: 'good', category: 'Yngel' },
+      { id: 'brood-spotty', text: 'Fläckigt yngelmönster', severity: 'warning', category: 'Yngel' },
+      { id: 'brood-disease', text: 'Misstänkt yngelsjukdom', severity: 'critical', category: 'Yngel' },
+      { id: 'drone-brood', text: 'Mycket drönyngel', severity: 'warning', category: 'Yngel' },
+      // Population
+      { id: 'pop-strong', text: 'Stark population', severity: 'good', category: 'Population' },
+      { id: 'pop-building', text: 'Växande population', severity: 'good', category: 'Population' },
+      { id: 'pop-weak', text: 'Svag population', severity: 'warning', category: 'Population' },
+      { id: 'pop-aggressive', text: 'Aggressivt beteende', severity: 'warning', category: 'Population' },
+      { id: 'pop-calm', text: 'Lugnt temperament', severity: 'good', category: 'Population' },
+      // Honung
+      { id: 'honey-stores', text: 'Goda honungsförråd', severity: 'good', category: 'Honung' },
+      { id: 'honey-capped', text: 'Täckta honungsceller', severity: 'good', category: 'Honung' },
+      { id: 'honey-low', text: 'Låga förråd', severity: 'warning', category: 'Honung' },
+      { id: 'pollen-stores', text: 'Goda pollenförråd', severity: 'good', category: 'Honung' },
+      { id: 'nectar-flow', text: 'Aktiv nektarinsamling', severity: 'good', category: 'Honung' },
+      // Hälsa
+      { id: 'health-good', text: 'Friska bin', severity: 'good', category: 'Hälsa' },
+      { id: 'varroa-low', text: 'Låg varroabelastning', severity: 'good', category: 'Hälsa' },
+      { id: 'varroa-high', text: 'Hög varroabelastning', severity: 'critical', category: 'Hälsa' },
+      { id: 'dead-bees', text: 'Döda bin framför kupa', severity: 'warning', category: 'Hälsa' },
+      { id: 'nosema', text: 'Misstänkt nosema', severity: 'critical', category: 'Hälsa' },
+      // Struktur
+      { id: 'comb-building', text: 'Aktiv vaxbyggning', severity: 'good', category: 'Struktur' },
+      { id: 'comb-quality', text: 'Bra vaxkvalitet', severity: 'good', category: 'Struktur' },
+      { id: 'propolis', text: 'Mycket propolis', severity: 'neutral', category: 'Struktur' },
+      { id: 'space-needed', text: 'Behöver mer plats', severity: 'warning', category: 'Struktur' },
+      { id: 'frames-drawn', text: 'Nya ramar utbyggda', severity: 'good', category: 'Struktur' },
+    ];
+    
+    return allObservations.find(obs => obs.id === observationId);
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'good': return '#8FBC8F';
+      case 'warning': return '#FF8C42';
+      case 'critical': return '#E74C3C';
       default: return '#8B7355';
     }
   };
@@ -245,6 +299,27 @@ export default function InspectionDetailsScreen() {
           )}
 
           {/* Notes Card */}
+          {/* Observations Card */}
+          {inspection.observations && inspection.observations.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Iakttagelser</Text>
+              <View style={styles.observationsDisplay}>
+                {inspection.observations.map((obsId, index) => {
+                  const observation = getObservationText(obsId);
+                  if (!observation) return null;
+                  
+                  return (
+                    <View key={index} style={styles.observationTag}>
+                      <View style={[styles.observationIndicator, { backgroundColor: getSeverityColor(observation.severity) }]} />
+                      <Text style={styles.observationTagText}>{observation.text}</Text>
+                      <Text style={styles.observationCategory}>({observation.category})</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
           {inspection.notes && (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Anteckningar</Text>
@@ -503,5 +578,33 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginLeft: 12,
     flex: 1,
+  },
+  observationsDisplay: {
+    gap: 8,
+  },
+  observationTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  observationIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  observationTagText: {
+    fontSize: 14,
+    color: '#8B4513',
+    fontWeight: '600',
+    flex: 1,
+  },
+  observationCategory: {
+    fontSize: 10,
+    color: '#8B7355',
+    fontStyle: 'italic',
   },
 });
