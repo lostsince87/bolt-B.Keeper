@@ -2,10 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Thermometer, FileText, Save, Crown, Bug, Activity, Layers, Cloud, Snowflake, Shield, Scissors } from 'lucide-react-native';
-import { Eye, Heart, Zap, Droplets, AlertTriangle, CheckCircle, XCircle, Plus } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
-import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Eye, Heart, Zap, Droplets, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Circle as XCircle, Plus } from 'lucide-react-native'm '@react-native-async-storage/async-storage';
 
 export default function AddInspectionScreen() {
   const [selectedHive, setSelectedHive] = useState('');
@@ -29,8 +26,6 @@ export default function AddInspectionScreen() {
   const [newQueenMarked, setNewQueenMarked] = useState<boolean | null>(null);
   const [newQueenColor, setNewQueenColor] = useState('');
   const [newQueenWingClipped, setNewQueenWingClipped] = useState<boolean | null>(null);
-  const [selectedObservations, setSelectedObservations] = useState<string[]>([]);
-  const [customObservation, setCustomObservation] = useState('');
 
   const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
@@ -41,88 +36,6 @@ export default function AddInspectionScreen() {
     { id: 'red', name: 'Röd', color: '#FF0000', textColor: '#FFFFFF' },
     { id: 'green', name: 'Grön', color: '#008000', textColor: '#FFFFFF' },
     { id: 'blue', name: 'Blå', color: '#0000FF', textColor: '#FFFFFF' },
-  ];
-
-  // Observationskategorier och fördefinierade val
-  const observationCategories = [
-    {
-      id: 'queen',
-      title: 'Drottning',
-      icon: Crown,
-      color: '#F7B801',
-      observations: [
-        { id: 'queen-laying', text: 'Aktiv äggläggning', severity: 'good' },
-        { id: 'queen-marked', text: 'Märkt drottning', severity: 'neutral' },
-        { id: 'queen-old', text: 'Gammal drottning', severity: 'warning' },
-        { id: 'queen-supersedure', text: 'Avlösningsceller', severity: 'warning' },
-        { id: 'queen-cells', text: 'Svärmceller', severity: 'critical' },
-      ]
-    },
-    {
-      id: 'brood',
-      title: 'Yngel',
-      icon: Heart,
-      color: '#8FBC8F',
-      observations: [
-        { id: 'brood-pattern', text: 'Bra yngelmönster', severity: 'good' },
-        { id: 'brood-stages', text: 'Alla yngelstadier', severity: 'good' },
-        { id: 'brood-spotty', text: 'Fläckigt yngelmönster', severity: 'warning' },
-        { id: 'brood-disease', text: 'Misstänkt yngelsjukdom', severity: 'critical' },
-        { id: 'drone-brood', text: 'Mycket drönyngel', severity: 'warning' },
-      ]
-    },
-    {
-      id: 'population',
-      title: 'Population',
-      icon: Activity,
-      color: '#FF8C42',
-      observations: [
-        { id: 'pop-strong', text: 'Stark population', severity: 'good' },
-        { id: 'pop-building', text: 'Växande population', severity: 'good' },
-        { id: 'pop-weak', text: 'Svag population', severity: 'warning' },
-        { id: 'pop-aggressive', text: 'Aggressivt beteende', severity: 'warning' },
-        { id: 'pop-calm', text: 'Lugnt temperament', severity: 'good' },
-      ]
-    },
-    {
-      id: 'honey',
-      title: 'Honung & Förvaring',
-      icon: Droplets,
-      color: '#F7B801',
-      observations: [
-        { id: 'honey-stores', text: 'Goda honungsförråd', severity: 'good' },
-        { id: 'honey-capped', text: 'Täckta honungsceller', severity: 'good' },
-        { id: 'honey-low', text: 'Låga förråd', severity: 'warning' },
-        { id: 'pollen-stores', text: 'Goda pollenförråd', severity: 'good' },
-        { id: 'nectar-flow', text: 'Aktiv nektarinsamling', severity: 'good' },
-      ]
-    },
-    {
-      id: 'health',
-      title: 'Hälsa',
-      icon: Shield,
-      color: '#E74C3C',
-      observations: [
-        { id: 'health-good', text: 'Friska bin', severity: 'good' },
-        { id: 'varroa-low', text: 'Låg varroabelastning', severity: 'good' },
-        { id: 'varroa-high', text: 'Hög varroabelastning', severity: 'critical' },
-        { id: 'dead-bees', text: 'Döda bin framför kupa', severity: 'warning' },
-        { id: 'nosema', text: 'Misstänkt nosema', severity: 'critical' },
-      ]
-    },
-    {
-      id: 'structure',
-      title: 'Struktur',
-      icon: Layers,
-      color: '#8B7355',
-      observations: [
-        { id: 'comb-building', text: 'Aktiv vaxbyggning', severity: 'good' },
-        { id: 'comb-quality', text: 'Bra vaxkvalitet', severity: 'good' },
-        { id: 'propolis', text: 'Mycket propolis', severity: 'neutral' },
-        { id: 'space-needed', text: 'Behöver mer plats', severity: 'warning' },
-        { id: 'frames-drawn', text: 'Nya ramar utbyggda', severity: 'good' },
-      ]
-    }
   ];
 
   // Auto-fill weather when component mounts
@@ -183,34 +96,6 @@ export default function AddInspectionScreen() {
     calculateVarroaPerDay(varroaCount, value);
   };
 
-  // Hantera val av observationer
-  const toggleObservation = (observationId: string) => {
-    setSelectedObservations(prev => 
-      prev.includes(observationId) 
-        ? prev.filter(id => id !== observationId)
-        : [...prev, observationId]
-    );
-  };
-
-  // Lägg till egen observation
-  const addCustomObservation = () => {
-    if (customObservation.trim()) {
-      const customId = `custom-${Date.now()}`;
-      setSelectedObservations(prev => [...prev, customId]);
-      setCustomObservation('');
-    }
-  };
-
-  // Få färg baserat på allvarlighetsgrad
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'good': return '#8FBC8F';
-      case 'warning': return '#FF8C42';
-      case 'critical': return '#E74C3C';
-      default: return '#8B7355';
-    }
-  };
-
   const getVarroaLevelColor = (level: string | null) => {
     switch (level) {
       case 'lågt': return '#8FBC8F';
@@ -246,10 +131,6 @@ export default function AddInspectionScreen() {
       varroaPerDay,
       varroaLevel,
       notes: notes.trim(),
-      observations: selectedObservations,
-      customObservations: selectedObservations
-        .filter(id => id.startsWith('custom-'))
-        .map(id => customObservation), // In real implementation, store custom text properly
       isWintering,
       winterFeed: winterFeed ? parseFloat(winterFeed) : null,
       isVarroaTreatment,
@@ -751,70 +632,6 @@ export default function AddInspectionScreen() {
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Iakttagelser</Text>
-              <ScrollView style={styles.observationsContainer} nestedScrollEnabled={true}>
-                {observationCategories.map((category) => (
-                  <View key={category.id} style={styles.observationCategory}>
-                    <View style={styles.categoryHeader}>
-                      <category.icon size={20} color={category.color} />
-                      <Text style={[styles.categoryTitle, { color: category.color }]}>
-                        {category.title}
-                      </Text>
-                    </View>
-                    <View style={styles.observationGrid}>
-                      {category.observations.map((observation) => (
-                        <TouchableOpacity
-                          key={observation.id}
-                          style={[
-                            styles.observationButton,
-                            selectedObservations.includes(observation.id) && [
-                              styles.observationButtonSelected,
-                              { backgroundColor: getSeverityColor(observation.severity) }
-                            ]
-                          ]}
-                          onPress={() => toggleObservation(observation.id)}
-                        >
-                          {selectedObservations.includes(observation.id) ? (
-                            <CheckCircle size={16} color="white" />
-                          ) : (
-                            <View style={[styles.observationDot, { backgroundColor: getSeverityColor(observation.severity) }]} />
-                          )}
-                          <Text style={[
-                            styles.observationText,
-                            selectedObservations.includes(observation.id) && styles.observationTextSelected
-                          ]}>
-                            {observation.text}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-                
-                {/* Egen observation */}
-                <View style={styles.customObservationSection}>
-                  <Text style={styles.categoryTitle}>Egen iakttagelse</Text>
-                  <View style={styles.customObservationRow}>
-                    <TextInput
-                      style={styles.customObservationInput}
-                      value={customObservation}
-                      onChangeText={setCustomObservation}
-                      placeholder="Skriv egen observation..."
-                      placeholderTextColor="#8B7355"
-                    />
-                    <TouchableOpacity 
-                      style={styles.addCustomButton}
-                      onPress={addCustomObservation}
-                      disabled={!customObservation.trim()}
-                    >
-                      <Plus size={20} color={customObservation.trim() ? 'white' : '#8B7355'} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </ScrollView>
-            </View>
-
-            <View style={styles.inputGroup}>
               <Text style={styles.label}>Anteckningar</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -1079,12 +896,12 @@ const styles = StyleSheet.create({
     borderColor: '#8FBC8F',
   },
   specialActionText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: '#8B7355',
     marginLeft: 6,
     textAlign: 'center',
-    flex: 1,
+    flexShrink: 1,
     lineHeight: 14,
   },
   specialActionTextActive: {
@@ -1140,29 +957,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  observationsContainer: {
-    maxHeight: 400,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   observationCategory: {
-    marginBottom: 20,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   categoryTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginLeft: 8,
+    color: '#8B4513',
+    marginBottom: 8,
   },
   observationGrid: {
     flexDirection: 'row',
@@ -1170,62 +972,34 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   observationButton: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: 'white',
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#E8D5B7',
-    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   observationButtonSelected: {
-    borderColor: 'transparent',
+    backgroundColor: '#8FBC8F',
+    borderColor: '#8FBC8F',
   },
-  observationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
+  observationIcon: {
+    fontSize: 16,
+    marginRight: 6,
   },
   observationText: {
     fontSize: 12,
     color: '#8B7355',
     fontWeight: '600',
-    flexShrink: 1,
   },
   observationTextSelected: {
     color: 'white',
-  },
-  customObservationSection: {
-    borderTopWidth: 1,
-    borderTopColor: '#E8D5B7',
-    paddingTop: 16,
-    marginTop: 8,
-  },
-  customObservationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  customObservationInput: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#8B4513',
-    borderWidth: 1,
-    borderColor: '#E8D5B7',
-  },
-  addCustomButton: {
-    backgroundColor: '#8FBC8F',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

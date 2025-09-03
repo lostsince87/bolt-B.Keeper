@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Calendar, Thermometer, Cloud, Crown, Scissors, Bug, Activity, Layers, FileText, CreditCard as Edit, Snowflake, Shield } from 'lucide-react-native';
-import { Eye, Heart, Zap, Droplets, AlertTriangle, CheckCircle } from 'lucide-react-native';
+import { Eye, Heart, Zap, Droplets, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { router, useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
