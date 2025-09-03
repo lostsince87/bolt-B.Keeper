@@ -23,7 +23,11 @@ export default function InspectionsScreen() {
         const savedInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
         const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
       
-        if (savedInspections.length === 0) {
+        // Ensure savedInspections is an array
+        const inspectionsArray = Array.isArray(savedInspections) ? savedInspections : [];
+        const hivesArray = Array.isArray(savedHives) ? savedHives : [];
+        
+        if (inspectionsArray.length === 0) {
           // Default inspections if none saved
           const defaultInspections = [
             {
@@ -66,13 +70,14 @@ export default function InspectionsScreen() {
           setInspections(defaultInspections);
           await AsyncStorage.setItem('inspections', JSON.stringify(defaultInspections));
         } else {
-          setInspections(savedInspections);
+          setInspections(inspectionsArray);
         }
       
-        setHives(savedHives);
+        setHives(hivesArray);
       } catch (error) {
         console.log('Could not load inspections from AsyncStorage:', error);
         setInspections([]);
+        setHives([]);
       }
     };
     

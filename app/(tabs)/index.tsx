@@ -196,7 +196,7 @@ export default function HomeScreen() {
                 <Plus size={20} color="white" />
               </TouchableOpacity>
             </View>
-            {tasks.map((task, index) => (
+            {tasks && tasks.map((task, index) => (
               <TouchableOpacity key={index} style={styles.taskCard}>
                 <View style={[styles.taskPriority, { backgroundColor: task.color }]} />
                 <View style={styles.taskContent}>
@@ -205,7 +205,7 @@ export default function HomeScreen() {
                     <Calendar size={14} color="#8B7355" />
                     <Text style={styles.taskDate}>{task.date}</Text>
                     <Text style={[styles.taskPriorityText, { color: task.color }]}>
-                      • {task.priority.toUpperCase()} PRIORITET
+                      <Text>• {task.priority.toUpperCase()} PRIORITET</Text>
                     </Text>
                   </View>
                 </View>
