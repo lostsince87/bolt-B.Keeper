@@ -128,13 +128,57 @@ export default function AddInspectionScreen() {
       return;
     }
 
+    // Calculate inspection rating based on observations and data
+    const calculateInspectionRating = () => {
+      let score = 3; // Start with neutral
+      
+      // Positive factors
+      if (queenSeen === true) score += 1;
+      if (varroaPerDay && varroaPerDay <= 2) score += 1;
+      if (temperament === 'Lugn') score += 0.5;
+      if (selectedObservations.includes('brood-pattern')) score += 0.5;
+      if (selectedObservations.includes('pop-strong')) score += 0.5;
+      
+      // Negative factors
+      if (queenSeen === false) score -= 1;
+      if (varroaPerDay && varroaPerDay > 5) score -= 1;
+      if (temperament === 'Aggressiv') score -= 0.5;
+      if (selectedObservations.includes('brood-disease')) score -= 2;
+      if (selectedObservations.includes('pop-weak')) score -= 1;
+      
+      return Math.max(1, Math.min(5, Math.round(score)));
+    };
+
+    // Calculate hive status based on inspection data
+    const calculateHiveStatus = (inspection) => {
+      if (inspection.varroaPerDay > 5 || inspection.queenSeen === false) {
+        return 'critical';
+      }
+      if (inspection.varroaPerDay > 2 || inspection.temperament === 'Aggressiv') {
+        return 'warning';
+      }
+      if (inspection.queenSeen === true && inspection.varroaPerDay <= 2) {
+        return 'excellent';
+      }
+      return 'good';
+    };
+
+    // Calculate population based on brood frames
+    const calculatePopulation = (broodFrames) => {
+      if (broodFrames >= 8) return 'Stark';
+      if (broodFrames >= 5) return 'Medel';
+      return 'Svag';
+    };
+
     // Create inspection object
     const newInspection = {
       id: Date.now(),
       hive: selectedHive,
       date,
+      time: new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }),
       weather,
       temperature: parseFloat(temperature),
+      duration: '30 min', // Default duration
       broodFrames: broodFramesNum,
       totalFrames: totalFramesNum,
       queenSeen,
@@ -156,7 +200,20 @@ export default function AddInspectionScreen() {
       newQueenWingClipped: newQueenAdded ? newQueenWingClipped : null,
       createdAt: new Date().toISOString(),
       rating: calculateInspectionRating(),
+      findings: [], // Will be populated based on observations
     };
+
+    // Generate findings based on observations and data
+    const findings = [];
+    if (queenSeen === true) findings.push('Drottning sedd');
+    if (queenSeen === false) findings.push('Drottning ej sedd');
+    if (varroaPerDay) findings.push(`Varroa: ${varroaPerDay.toFixed(1)}/dag (${varroaLevel})`);
+    if (temperament) findings.push(`Temperament: ${temperament}`);
+    if (isVarroaTreatment) findings.push(`Behandling: ${treatmentType}`);
+    if (isWintering) findings.push(`Invintring: ${winterFeed} kg foder`);
+    if (newQueenAdded) findings.push('Ny drottning tillagd');
+    
+    newInspection.findings = findings;
 
     // Save inspection to AsyncStorage
     const saveInspection = async () => {
@@ -205,20 +262,21 @@ export default function AddInspectionScreen() {
           });
           await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
         }
+        
+        Alert.alert(
+          'Inspektion sparad!', 
+          `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
       } catch (error) {
         console.log('Could not save inspection:', error);
+        Alert.alert('Fel', 'Kunde inte spara inspektionen. Försök igen.');
         Alert.alert('Fel', 'Kunde inte spara inspektionen. Försök igen.');
         return;
       }
     };
 
-    saveInspection().then(() => {
-      Alert.alert(
-        'Inspektion sparad!', 
-        `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    });
+    saveInspection();
   };
 
   // Calculate inspection rating based on observations and data
