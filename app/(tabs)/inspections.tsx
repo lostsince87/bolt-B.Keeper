@@ -261,7 +261,7 @@ export default function InspectionsScreen() {
                 <View style={styles.findingsContainer}>
                   <Text style={styles.findingsTitle}>Iakttagelser:</Text>
                   <View style={styles.findingsList}>
-                  {inspection.findings.map((finding, index) => (
+                  {(inspection.findings || []).map((finding, index) => (
                     <View key={index} style={styles.findingItem}>
                       <View style={styles.findingDot} />
                       <Text style={styles.findingText}>{finding}</Text>
