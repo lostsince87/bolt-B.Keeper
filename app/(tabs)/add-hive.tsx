@@ -87,6 +87,10 @@ export default function AddHiveScreen() {
       Alert.alert('Fel', 'Ange en plats för kupan');
       return;
     }
+    if (!frames || parseInt(frames) <= 0) {
+      Alert.alert('Fel', 'Ange ett giltigt antal ramar');
+      return;
+    }
 
     const frameCount = parseInt(frames);
     if (frameCount <= 10 && isNucleus === null) {
@@ -130,10 +134,16 @@ export default function AddHiveScreen() {
       id: Date.now(), // Enkel ID-generering
       name: hiveName.trim(),
       location: location.trim(),
-      frames: frameCount,
+      frames: `0/${frameCount}`, // Start with 0 brood frames
       isNucleus: frameCount <= 10 ? isNucleus : false,
+      isWintered: false,
       notes: notes.trim(),
       createdAt: new Date().toISOString(),
+      lastInspection: new Date().toISOString().split('T')[0],
+      status: hasQueen ? 'good' : 'warning',
+      population: frameCount <= 10 ? 'Svag' : 'Medel',
+      varroa: '0.0/dag',
+      honey: '0 kg',
       image: selectedImage, // Spara bildväg
       ...queenData,
     };
@@ -142,20 +152,32 @@ export default function AddHiveScreen() {
     const saveHive = async () => {
       try {
         const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        
+        // Check if hive name already exists
+        const nameExists = existingHives.some(hive => 
+          hive.name.toLowerCase() === hiveName.trim().toLowerCase()
+        );
+        
+        if (nameExists) {
+          Alert.alert('Fel', 'En kupa med detta namn finns redan');
+          return;
+        }
+        
         const updatedHives = [...existingHives, newHive];
         await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+        
+        Alert.alert(
+          'Kupa sparad!', 
+          `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}${hasQueen ? ' med drottning' : ''}`,
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
       } catch (error) {
         console.log('Could not save to AsyncStorage:', error);
+        Alert.alert('Fel', 'Kunde inte spara kupan. Försök igen.');
       }
     };
 
-    saveHive().then(() => {
-      Alert.alert(
-        'Kupa sparad!', 
-        `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}${hasQueen ? ' med drottning' : ''}`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    });
+    saveHive();
   };
 
   // ============================================
