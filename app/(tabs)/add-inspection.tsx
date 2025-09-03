@@ -118,6 +118,14 @@ export default function AddInspectionScreen() {
       return;
     }
 
+    const broodFramesNum = parseInt(broodFrames);
+    const totalFramesNum = parseInt(totalFrames);
+    
+    if (broodFramesNum > totalFramesNum) {
+      Alert.alert('Fel', 'Antal yngelramar kan inte vara fler än totala ramar');
+      return;
+    }
+
     // Create inspection object
     const newInspection = {
       id: Date.now(),
@@ -125,14 +133,16 @@ export default function AddInspectionScreen() {
       date,
       weather,
       temperature: parseFloat(temperature),
-      broodFrames: parseInt(broodFrames),
-      totalFrames: parseInt(totalFrames),
+      broodFrames: broodFramesNum,
+      totalFrames: totalFramesNum,
       queenSeen,
       temperament,
       varroaCount: varroaCount ? parseFloat(varroaCount) : null,
       varroaDays: varroaDays ? parseFloat(varroaDays) : null,
       varroaPerDay,
       varroaLevel,
+      observations: selectedObservations,
+      customObservation: customObservation.trim() || null,
       notes: notes.trim(),
       isWintering,
       winterFeed: winterFeed ? parseFloat(winterFeed) : null,
@@ -143,6 +153,7 @@ export default function AddInspectionScreen() {
       newQueenColor: newQueenAdded && newQueenMarked ? newQueenColor : null,
       newQueenWingClipped: newQueenAdded ? newQueenWingClipped : null,
       createdAt: new Date().toISOString(),
+      rating: calculateInspectionRating(),
     };
 
     // Save inspection to AsyncStorage
@@ -164,30 +175,33 @@ export default function AddInspectionScreen() {
                 queenColor: newQueenMarked ? newQueenColor : null,
                 queenWingClipped: newQueenWingClipped,
                 queenAddedDate: new Date().toISOString(),
-                isWintered: isWintering ? true : hive.isWintered,
+                lastInspection: date,
+                status: calculateHiveStatus(newInspection),
+                population: calculatePopulation(broodFramesNum),
+                varroa: varroaPerDay ? `${varroaPerDay.toFixed(1)}/dag` : hive.varroa,
+                frames: `${broodFramesNum}/${totalFramesNum}`,
               };
             }
             return hive;
           });
-          
-          // Update wintering status for all hives if this is a wintering inspection
-          if (isWintering) {
-            const winteringHives = updatedHives.map(hive => ({
-              ...hive,
-              isWintered: true
-            }));
-            await AsyncStorage.setItem('hives', JSON.stringify(winteringHives));
-          } else {
-            await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
-          }
-        } else if (isWintering) {
-          // Update wintering status even if no new queen
+          await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+        } else {
+          // Update hive data even if no new queen
           const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
-          const winteringHives = existingHives.map(hive => ({
-            ...hive,
-            isWintered: true
-          }));
-          await AsyncStorage.setItem('hives', JSON.stringify(winteringHives));
+          const updatedHives = existingHives.map(hive => {
+            if (hive.name === selectedHive) {
+              return {
+                ...hive,
+                lastInspection: date,
+                status: calculateHiveStatus(newInspection),
+                population: calculatePopulation(broodFramesNum),
+                varroa: varroaPerDay ? `${varroaPerDay.toFixed(1)}/dag` : hive.varroa,
+                frames: `${broodFramesNum}/${totalFramesNum}`,
+              };
+            }
+            return hive;
+          });
+          await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
         }
       } catch (error) {
         console.log('Could not save inspection:', error);
@@ -203,6 +217,48 @@ export default function AddInspectionScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     });
+  };
+
+  // Calculate inspection rating based on observations and data
+  const calculateInspectionRating = () => {
+    let score = 3; // Start with neutral
+    
+    // Positive factors
+    if (queenSeen === true) score += 1;
+    if (varroaPerDay && varroaPerDay <= 2) score += 1;
+    if (temperament === 'Lugn') score += 0.5;
+    if (selectedObservations.includes('brood-pattern')) score += 0.5;
+    if (selectedObservations.includes('pop-strong')) score += 0.5;
+    
+    // Negative factors
+    if (queenSeen === false) score -= 1;
+    if (varroaPerDay && varroaPerDay > 5) score -= 1;
+    if (temperament === 'Aggressiv') score -= 0.5;
+    if (selectedObservations.includes('brood-disease')) score -= 2;
+    if (selectedObservations.includes('pop-weak')) score -= 1;
+    
+    return Math.max(1, Math.min(5, Math.round(score)));
+  };
+
+  // Calculate hive status based on inspection data
+  const calculateHiveStatus = (inspection) => {
+    if (inspection.varroaPerDay > 5 || inspection.queenSeen === false) {
+      return 'critical';
+    }
+    if (inspection.varroaPerDay > 2 || inspection.temperament === 'Aggressiv') {
+      return 'warning';
+    }
+    if (inspection.queenSeen === true && inspection.varroaPerDay <= 2) {
+      return 'excellent';
+    }
+    return 'good';
+  };
+
+  // Calculate population based on brood frames
+  const calculatePopulation = (broodFrames) => {
+    if (broodFrames >= 8) return 'Stark';
+    if (broodFrames >= 5) return 'Medel';
+    return 'Svag';
   };
 
   return (
