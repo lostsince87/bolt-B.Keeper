@@ -29,6 +29,8 @@ export default function AddInspectionScreen() {
   const [newQueenMarked, setNewQueenMarked] = useState<boolean | null>(null);
   const [newQueenColor, setNewQueenColor] = useState('');
   const [newQueenWingClipped, setNewQueenWingClipped] = useState<boolean | null>(null);
+  const [selectedObservations, setSelectedObservations] = useState<string[]>([]);
+  const [customObservation, setCustomObservation] = useState('');
 
   const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
