@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
   const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
+  const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'nucleus']);
   const [tasks, setTasks] = useState([]);
   const [hives, setHives] = useState([]);
   const [showActionMenu, setShowActionMenu] = useState(false);
@@ -77,6 +78,18 @@ export default function HomeScreen() {
     return (totalVarroa / hives.length).toFixed(1);
   };
 
+  // Beräkna antal avläggare senaste året
+  const calculateNucleusThisYear = () => {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    
+    return hives.filter(hive => {
+      if (!hive.isNucleus || !hive.createdAt) return false;
+      const createdDate = new Date(hive.createdAt);
+      return createdDate >= oneYearAgo;
+    }).length;
+  };
+
   const allStats = [
     { 
       id: 'hives',
@@ -111,6 +124,13 @@ export default function HomeScreen() {
       title: 'Genomsnittlig population', 
       value: calculateAveragePopulation(), 
       icon: Activity, 
+      color: '#8FBC8F' 
+    },
+    { 
+      id: 'nucleus',
+      title: 'Avläggare senaste året', 
+      value: calculateNucleusThisYear().toString(), 
+      icon: Plus, 
       color: '#8FBC8F' 
     },
   ];

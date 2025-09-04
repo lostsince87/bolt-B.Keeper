@@ -2,25 +2,31 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChartBar as BarChart3, TrendingUp, TrendingDown, Droplets, Bug, Calendar, Filter } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function StatisticsScreen() {
   const [inspections, setInspections] = useState([]);
 
+  const [hives, setHives] = useState([]);
+
   useEffect(() => {
-    // Load inspections from localStorage
-    const loadInspections = async () => {
+    // Load inspections and hives from localStorage
+    const loadData = async () => {
       try {
         const savedInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
         setInspections(savedInspections);
+        setHives(savedHives);
       } catch (error) {
-        console.log('Could not load inspections:', error);
+        console.log('Could not load data:', error);
         setInspections([]);
+        setHives([]);
       }
     };
     
-    loadInspections();
+    loadData();
   }, []);
 
   const yearlyStats = {
@@ -111,9 +117,11 @@ export default function StatisticsScreen() {
 
   const monthlyHoney = calculateMonthlyHoney();
   const varroaTrend = calculateVarroaTrend();
+  const nucleusTrend = calculateMonthlyNucleus();
 
   const maxHoney = Math.max(...monthlyHoney.map(m => m.amount));
   const maxVarroa = Math.max(...varroaTrend.map(v => v.level));
+  const maxNucleus = Math.max(...nucleusTrend.map(n => n.count));
 
   return (
     <SafeAreaView style={styles.container}>
@@ -147,6 +155,16 @@ export default function StatisticsScreen() {
               <View style={styles.trendRow}>
                 <TrendingDown size={14} color="#8FBC8F" />
                 <Text style={[styles.trendText, { color: '#8FBC8F' }]}>-8%</Text>
+              </View>
+            </View>
+
+            <View style={[styles.summaryCard, { backgroundColor: '#8FBC8F' + '20' }]}>
+              <Plus size={24} color="#8FBC8F" />
+              <Text style={styles.summaryValue}>{nucleusTrend.reduce((sum, n) => sum + n.count, 0)}</Text>
+              <Text style={styles.summaryLabel}>Avläggare i år</Text>
+              <View style={styles.trendRow}>
+                <TrendingUp size={14} color="#8FBC8F" />
+                <Text style={[styles.trendText, { color: '#8FBC8F' }]}>+12%</Text>
               </View>
             </View>
           </View>
@@ -209,6 +227,34 @@ export default function StatisticsScreen() {
                   ]}>
                     {month.level > 0 ? month.level.toFixed(1) : '0'}
                   </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.chartContainer}>
+            <Text style={styles.chartTitle}>Avläggare senaste 12 månaderna</Text>
+            <View style={styles.chart}>
+              {nucleusTrend.map((month, index) => (
+                <View key={index} style={styles.barContainer}>
+                  <View style={styles.barWrapper}>
+                    <View 
+                      style={[
+                        styles.bar,
+                        { 
+                          height: Math.max((month.count / Math.max(maxNucleus, 1)) * 120, 2),
+                          backgroundColor: month.count > 0 ? '#8FBC8F' : '#E8D5B7'
+                        }
+                      ]} 
+                    />
+                  </View>
+                  <Text style={styles.barLabel}>
+                    {month.year !== new Date().getFullYear() 
+                      ? `${month.month} ${month.year.toString().slice(-2)}` 
+                      : month.month
+                    }
+                  </Text>
+                  <Text style={styles.barValue}>{month.count}</Text>
                 </View>
               ))}
             </View>

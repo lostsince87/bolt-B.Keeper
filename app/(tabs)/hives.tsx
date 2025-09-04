@@ -50,7 +50,7 @@ const getStatusText = (status: string) => {
     case 'good': return 'Bra';
     case 'warning': return 'Varning';
     case 'critical': return 'Kritisk';
-    default: return 'Okänd';
+    default: return 'Ny kupa';
   }
 };
 
@@ -87,7 +87,9 @@ const getDetailedStatusText = (hive) => {
     return issues.length > 0 ? issues.join(', ') : 'Varning';
   }
   
-  return getStatusText(hive.status);
+  if (hive.status === 'excellent') return 'Utmärkt';
+  if (hive.status === 'good') return 'Bra';
+  return 'Ny kupa - Väntar på första inspektion';
 };
 // ============================================
 // HUVUDKOMPONENT (Main Component)

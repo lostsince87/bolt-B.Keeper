@@ -86,7 +86,7 @@ export default function HiveDetailsScreen() {
       case 'good': return 'Bra';
       case 'warning': return 'Varning';
       case 'critical': return 'Kritisk';
-      default: return 'Okänd';
+      default: return 'Ny kupa';
     }
   };
 
@@ -125,7 +125,7 @@ export default function HiveDetailsScreen() {
     
     if (hive.status === 'excellent') return 'Utmärkt tillstånd';
     if (hive.status === 'good') return 'Bra tillstånd';
-    return 'Okänt tillstånd';
+    return 'Ny kupa - Väntar på första inspektion för att bedöma tillstånd';
   };
 
   const handleInspectionPress = (inspection) => {
