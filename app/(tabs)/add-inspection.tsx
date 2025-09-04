@@ -32,7 +32,29 @@ export default function AddInspectionScreen() {
   const [selectedObservations, setSelectedObservations] = useState<string[]>([]);
   const [customObservation, setCustomObservation] = useState('');
 
-  const hives = ['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma'];
+  const [availableHives, setAvailableHives] = useState<string[]>([]);
+
+  // Load available hives when component mounts
+  useEffect(() => {
+    const loadHives = async () => {
+      try {
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        const hiveNames = savedHives.map(hive => hive.name);
+        if (hiveNames.length === 0) {
+          // Default hives if none exist
+          setAvailableHives(['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma']);
+        } else {
+          setAvailableHives(hiveNames);
+        }
+      } catch (error) {
+        console.log('Could not load hives:', error);
+        setAvailableHives(['Kupa Alpha', 'Kupa Beta', 'Kupa Gamma']);
+      }
+    };
+    
+    loadHives();
+  }, []);
+
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
   const treatmentOptions = ['Apiguard', 'Bayvarol', 'Apistan', 'Oxalsyra', 'Myrsyra', 'Annat'];
   const queenColors = [
@@ -111,6 +133,8 @@ export default function AddInspectionScreen() {
   };
 
   const handleSave = () => {
+    console.log('Starting to save inspection...');
+    
     if (!selectedHive) {
       Alert.alert('Fel', 'Välj en kupa att inspektera');
       return;
@@ -119,6 +143,8 @@ export default function AddInspectionScreen() {
       Alert.alert('Fel', 'Ange antal yngel- och totalramar');
       return;
     }
+
+    console.log('Validation passed, creating inspection...');
 
     const broodFramesNum = parseInt(broodFrames);
     const totalFramesNum = parseInt(totalFrames);
@@ -170,6 +196,8 @@ export default function AddInspectionScreen() {
       return 'Svag';
     };
 
+    console.log('Creating inspection object...');
+
     // Create inspection object
     const newInspection = {
       id: Date.now(),
@@ -203,6 +231,8 @@ export default function AddInspectionScreen() {
       findings: [], // Will be populated based on observations
     };
 
+    console.log('Generating findings...');
+
     // Generate findings based on observations and data
     const findings = [];
     if (queenSeen === true) findings.push('Drottning sedd');
@@ -215,15 +245,21 @@ export default function AddInspectionScreen() {
     
     newInspection.findings = findings;
 
+    console.log('Saving inspection to AsyncStorage...');
+
     // Save inspection to AsyncStorage
     const saveInspection = async () => {
       try {
         const existingInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
+        console.log('Existing inspections:', existingInspections.length);
+        
         const updatedInspections = [...existingInspections, newInspection];
         await AsyncStorage.setItem('inspections', JSON.stringify(updatedInspections));
+        console.log('Inspection saved successfully');
 
         // If new queen was added, update the hive data
         if (newQueenAdded) {
+          console.log('Updating hive with new queen...');
           const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
           const updatedHives = existingHives.map(hive => {
             if (hive.name === selectedHive) {
@@ -245,6 +281,7 @@ export default function AddInspectionScreen() {
           });
           await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
         } else {
+          console.log('Updating hive data...');
           // Update hive data even if no new queen
           const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
           const updatedHives = existingHives.map(hive => {
@@ -263,16 +300,15 @@ export default function AddInspectionScreen() {
           await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
         }
         
+        console.log('All data saved successfully');
         Alert.alert(
           'Inspektion sparad!', 
           `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } catch (error) {
-        console.log('Could not save inspection:', error);
+        console.error('Could not save inspection:', error);
         Alert.alert('Fel', 'Kunde inte spara inspektionen. Försök igen.');
-        Alert.alert('Fel', 'Kunde inte spara inspektionen. Försök igen.');
-        return;
       }
     };
 
@@ -340,7 +376,7 @@ export default function AddInspectionScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Välj kupa *</Text>
               <View style={styles.hiveSelector}>
-                {hives.map((hive) => (
+                {availableHives.map((hive) => (
                   <TouchableOpacity
                     key={hive}
                     style={[

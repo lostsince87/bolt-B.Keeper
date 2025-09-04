@@ -78,6 +78,8 @@ export default function AddHiveScreen() {
 
   // Spara kupa
   const handleSave = () => {
+    console.log('Starting to save hive...');
+    
     // Validering av obligatoriska fält
     if (!hiveName.trim()) {
       Alert.alert('Fel', 'Ange ett namn för kupan');
@@ -91,6 +93,8 @@ export default function AddHiveScreen() {
       Alert.alert('Fel', 'Ange ett giltigt antal ramar');
       return;
     }
+
+    console.log('Validation passed, creating hive...');
 
     const frameCount = parseInt(frames);
     if (frameCount <= 10 && isNucleus === null) {
@@ -113,6 +117,8 @@ export default function AddHiveScreen() {
       Alert.alert('Fel', 'Ange om drottningen är vingklippt');
       return;
     }
+
+    console.log('Creating hive object...');
 
     // Skapa drottningdata
     const queenData = hasQueen ? {
@@ -148,10 +154,13 @@ export default function AddHiveScreen() {
       ...queenData,
     };
 
+    console.log('Saving hive to AsyncStorage...');
+
     // Spara till AsyncStorage
     const saveHive = async () => {
       try {
         const existingHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        console.log('Existing hives:', existingHives.length);
         
         // Check if hive name already exists
         const nameExists = existingHives.some(hive => 
@@ -165,6 +174,7 @@ export default function AddHiveScreen() {
         
         const updatedHives = [...existingHives, newHive];
         await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
+        console.log('Hive saved successfully');
         
         Alert.alert(
           'Kupa sparad!', 
@@ -172,7 +182,7 @@ export default function AddHiveScreen() {
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } catch (error) {
-        console.log('Could not save to AsyncStorage:', error);
+        console.error('Could not save hive:', error);
         Alert.alert('Fel', 'Kunde inte spara kupan. Försök igen.');
       }
     };
