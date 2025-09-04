@@ -49,7 +49,7 @@ const getStatusText = (status: string) => {
     case 'excellent': return 'Utmärkt';
     case 'good': return 'Bra';
     case 'warning': return 'Varning';
-    case 'critical': return 'Kritisk';
+    case 'critical': return hive => hive.hasQueen === false ? 'Drottninglös' : 'Kritisk';
     default: return 'Okänd';
   }
 };
@@ -363,7 +363,7 @@ export default function HivesScreen() {
 
                   <View style={styles.hiveFooter}>
                     <Text style={styles.lastInspection}>
-                      Senaste inspektion: {hive.lastInspection}
+                      {hive.status === 'critical' && hive.hasQueen === false ? 'Drottninglös' : getStatusText(hive.status)}
                     </Text>
                     <View style={styles.footerRight}>
                       <Text style={styles.frames}>Ramar: {hive.frames}</Text>

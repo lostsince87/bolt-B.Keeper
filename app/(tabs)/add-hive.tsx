@@ -146,7 +146,7 @@ export default function AddHiveScreen() {
       notes: notes.trim(),
       createdAt: new Date().toISOString(),
       lastInspection: new Date().toISOString().split('T')[0],
-      status: hasQueen ? 'good' : 'warning',
+      status: hasQueen ? 'good' : 'critical',
       population: frameCount <= 10 ? 'Svag' : 'Medel',
       varroa: '0.0/dag',
       honey: '0 kg',
