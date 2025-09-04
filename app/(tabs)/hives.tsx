@@ -58,7 +58,7 @@ const getStatusText = (status: string) => {
 const getDetailedStatusText = (hive) => {
   if (hive.status === 'critical') {
     if (hive.hasQueen === false) {
-      return 'Drottninglös';
+      return 'Drottninglöst';
     }
     const varroaValue = parseFloat(hive.varroa);
     if (varroaValue > 5) {
