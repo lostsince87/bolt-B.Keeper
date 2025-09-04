@@ -90,6 +90,44 @@ export default function HiveDetailsScreen() {
     }
   };
 
+  // Få detaljerad statustext baserat på kupdata
+  const getDetailedStatusText = (hive) => {
+    if (hive.status === 'critical') {
+      if (hive.hasQueen === false) {
+        return 'Drottninglös - Behöver ny drottning';
+      }
+      const varroaValue = parseFloat(hive.varroa);
+      if (varroaValue > 5) {
+        return `Kritisk varroa (${hive.varroa}) - Behandling krävs omedelbart`;
+      }
+      return 'Kritisk situation - Kräver omedelbar åtgärd';
+    }
+    
+    if (hive.status === 'warning') {
+      const issues = [];
+      const varroaValue = parseFloat(hive.varroa);
+      
+      if (varroaValue > 2 && varroaValue <= 5) {
+        issues.push(`Förhöjd varroa (${hive.varroa}) - Övervaka noga`);
+      }
+      if (hive.population === 'Svag') {
+        issues.push('Svag population - Kontrollera näring och sjukdomar');
+      }
+      if (hive.frames) {
+        const [brood, total] = hive.frames.split('/').map(Number);
+        if (brood < total * 0.3) {
+          issues.push('Lite yngel - Kontrollera drottningens äggläggning');
+        }
+      }
+      
+      return issues.length > 0 ? issues.join('\n• ') : 'Varning - Kräver uppmärksamhet';
+    }
+    
+    if (hive.status === 'excellent') return 'Utmärkt tillstånd';
+    if (hive.status === 'good') return 'Bra tillstånd';
+    return 'Okänt tillstånd';
+  };
+
   const handleInspectionPress = (inspection) => {
     router.push({
       pathname: '/inspection-details',
@@ -133,10 +171,24 @@ export default function HiveDetailsScreen() {
               </View>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(hive.status) + '20' }]}>
                 <Text style={[styles.statusText, { color: getStatusColor(hive.status) }]}>
-                  {getStatusText(hive.status)}
+                  {hive.status === 'critical' && hive.hasQueen === false ? 'Drottninglös' : 
+                   hive.status === 'warning' ? 'Varning' : 
+                   hive.status === 'excellent' ? 'Utmärkt' : 
+                   hive.status === 'good' ? 'Bra' : 'Okänd'}
                 </Text>
               </View>
             </View>
+
+            {(hive.status === 'warning' || hive.status === 'critical') && (
+              <View style={[styles.warningDetails, { 
+                backgroundColor: getStatusColor(hive.status) + '10',
+                borderLeftColor: getStatusColor(hive.status)
+              }]}>
+                <Text style={[styles.warningText, { color: getStatusColor(hive.status) }]}>
+                  {getDetailedStatusText(hive)}
+                </Text>
+              </View>
+            )}
 
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
@@ -448,6 +500,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8B7355',
     marginLeft: 4,
+  },
+  warningDetails: {
+    borderLeftWidth: 4,
+    paddingLeft: 16,
+    paddingVertical: 12,
+    marginTop: 12,
+    borderRadius: 8,
+  },
+  warningText: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
   },
   inspectionsSection: {
     marginBottom: 100,

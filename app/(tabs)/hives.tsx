@@ -49,11 +49,46 @@ const getStatusText = (status: string) => {
     case 'excellent': return 'Utmärkt';
     case 'good': return 'Bra';
     case 'warning': return 'Varning';
-    case 'critical': return hive => hive.hasQueen === false ? 'Drottninglös' : 'Kritisk';
+    case 'critical': return 'Kritisk';
     default: return 'Okänd';
   }
 };
 
+// Få detaljerad statustext baserat på kupdata
+const getDetailedStatusText = (hive) => {
+  if (hive.status === 'critical') {
+    if (hive.hasQueen === false) {
+      return 'Drottninglös';
+    }
+    const varroaValue = parseFloat(hive.varroa);
+    if (varroaValue > 5) {
+      return `Kritisk varroa (${hive.varroa})`;
+    }
+    return 'Kritisk';
+  }
+  
+  if (hive.status === 'warning') {
+    const issues = [];
+    const varroaValue = parseFloat(hive.varroa);
+    
+    if (varroaValue > 2 && varroaValue <= 5) {
+      issues.push(`Förhöjd varroa (${hive.varroa})`);
+    }
+    if (hive.population === 'Svag') {
+      issues.push('Svag population');
+    }
+    if (hive.frames) {
+      const [brood, total] = hive.frames.split('/').map(Number);
+      if (brood < total * 0.3) {
+        issues.push('Lite yngel');
+      }
+    }
+    
+    return issues.length > 0 ? issues.join(', ') : 'Varning';
+  }
+  
+  return getStatusText(hive.status);
+};
 // ============================================
 // HUVUDKOMPONENT (Main Component)
 // ============================================
@@ -362,9 +397,17 @@ export default function HivesScreen() {
                   </View>
 
                   <View style={styles.hiveFooter}>
-                    <Text style={styles.lastInspection}>
-                      {hive.status === 'critical' && hive.hasQueen === false ? 'Drottninglös' : getStatusText(hive.status)}
-                    </Text>
+                    <View style={styles.statusContainer}>
+                      <Text style={[
+                        styles.statusDetailText,
+                        { color: getStatusColor(hive.status) }
+                      ]}>
+                        {getDetailedStatusText(hive)}
+                      </Text>
+                      <Text style={styles.lastInspectionDate}>
+                        Senast inspekterad: {hive.lastInspection}
+                      </Text>
+                    </View>
                     <View style={styles.footerRight}>
                       <Text style={styles.frames}>Ramar: {hive.frames}</Text>
                       {hive.hasQueen && hive.queenAddedDate && (
@@ -510,7 +553,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E8D5B7',
   },
-  lastInspection: {
+  statusContainer: {
+    flex: 1,
+  },
+  statusDetailText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  lastInspectionDate: {
     fontSize: 12,
     color: '#8B7355',
   },
