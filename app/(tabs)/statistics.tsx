@@ -83,6 +83,32 @@ export default function StatisticsScreen() {
     return monthlyData;
   };
 
+  // Beräkna avläggare per månad för senaste 12 månaderna
+  const calculateMonthlyNucleus = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+    const monthlyData = [];
+    
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      const nucleusCount = hives.filter(hive => {
+        if (!hive.isNucleus || !hive.createdAt) return false;
+        const createdDate = new Date(hive.createdAt);
+        const createdKey = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`;
+        return createdKey === monthKey;
+      }).length;
+      
+      monthlyData.push({
+        month: months[date.getMonth()],
+        count: nucleusCount,
+        year: date.getFullYear()
+      });
+    }
+    return monthlyData;
+  };
+
   const monthlyHoney = calculateMonthlyHoney();
   const varroaTrend = calculateVarroaTrend();
 
