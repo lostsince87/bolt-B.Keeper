@@ -9,7 +9,6 @@ import { BeehiveIcon } from '@/components/BeehiveIcon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
-  const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'varroa']);
   const [selectedStats, setSelectedStats] = useState(['hives', 'inspections', 'honey', 'nucleus']);
   const [tasks, setTasks] = useState([]);
   const [hives, setHives] = useState([]);
