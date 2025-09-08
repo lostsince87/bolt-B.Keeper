@@ -436,7 +436,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#8B4513',
-    marginLeft: 'auto',
+    marginLeft: 12,
+    minWidth: 50,
+    textAlign: 'right',
   },
   statsGrid: {
     flexDirection: 'row',
