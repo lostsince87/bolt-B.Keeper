@@ -6,11 +6,12 @@ import { Eye, Heart, Zap, Droplets, TriangleAlert as AlertTriangle, CircleCheck 
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 
 export default function AddInspectionScreen() {
   const [selectedHive, setSelectedHive] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [weather, setWeather] = useState(''); // Will be auto-filled
+  const [weather, setWeather] = useState('Hämtar väderdata...');
   const [temperature, setTemperature] = useState('18');
   const [broodFrames, setBroodFrames] = useState('');
   const [totalFrames, setTotalFrames] = useState('');
@@ -55,6 +56,42 @@ export default function AddInspectionScreen() {
     loadHives();
   }, []);
 
+  // Convert Open-Meteo weather codes to Swedish descriptions
+  const getWeatherDescription = (code: number): string => {
+    const weatherCodes: { [key: number]: string } = {
+      0: 'Klart',
+      1: 'Mestadels klart',
+      2: 'Delvis molnigt',
+      3: 'Molnigt',
+      45: 'Dimma',
+      48: 'Rimfrost',
+      51: 'Lätt duggregn',
+      53: 'Måttligt duggregn',
+      55: 'Kraftigt duggregn',
+      56: 'Lätt frysande duggregn',
+      57: 'Kraftigt frysande duggregn',
+      61: 'Lätt regn',
+      63: 'Måttligt regn',
+      65: 'Kraftigt regn',
+      66: 'Lätt frysande regn',
+      67: 'Kraftigt frysande regn',
+      71: 'Lätt snöfall',
+      73: 'Måttligt snöfall',
+      75: 'Kraftigt snöfall',
+      77: 'Snökorn',
+      80: 'Lätta regnskurar',
+      81: 'Måttliga regnskurar',
+      82: 'Kraftiga regnskurar',
+      85: 'Lätta snöskurar',
+      86: 'Kraftiga snöskurar',
+      95: 'Åska',
+      96: 'Åska med lätt hagel',
+      99: 'Åska med kraftigt hagel'
+    };
+    
+    return weatherCodes[code] || 'Okänt väder';
+  };
+
   const temperamentOptions = ['Lugn', 'Normal', 'Aggressiv'];
   const treatmentOptions = ['Apiguard', 'Bayvarol', 'Apistan', 'Oxalsyra', 'Myrsyra', 'Annat'];
   const queenColors = [
@@ -67,24 +104,43 @@ export default function AddInspectionScreen() {
 
   // Auto-fill weather when component mounts
   useEffect(() => {
-    // Simulate getting actual weather data
     const getWeatherData = async () => {
-      // In a real app, you would call a weather API here
-      // For now, we'll simulate different weather conditions
-      const weatherConditions = [
-        'Soligt, 18°C',
-        'Molnigt, 15°C',
-        'Lätt regn, 12°C',
-        'Delvis molnigt, 20°C',
-        'Klart, 22°C'
-      ];
-      const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
-      setWeather(randomWeather);
-      
-      // Extract temperature from weather string
-      const tempMatch = randomWeather.match(/(\d+)°C/);
-      if (tempMatch) {
-        setTemperature(tempMatch[1]);
+      try {
+        // Request location permission
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setWeather('Platsåtkomst nekad - ange väder manuellt');
+          return;
+        }
+
+        // Get current location
+        let location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+
+        // Fetch weather from Open-Meteo
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_speed_10m&timezone=Europe/Stockholm`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Kunde inte hämta väderdata');
+        }
+
+        const data = await response.json();
+        const current = data.current;
+        
+        // Convert weather code to Swedish description
+        const weatherDescription = getWeatherDescription(current.weather_code);
+        const temp = Math.round(current.temperature_2m);
+        const windSpeed = Math.round(current.wind_speed_10m);
+        
+        const weatherString = `${weatherDescription}, ${temp}°C, vind ${windSpeed} m/s`;
+        setWeather(weatherString);
+        setTemperature(temp.toString());
+        
+      } catch (error) {
+        console.log('Weather fetch error:', error);
+        setWeather('Kunde inte hämta väder - ange manuellt');
       }
     };
     
@@ -428,17 +484,20 @@ export default function AddInspectionScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Väder</Text>
-              <View style={[styles.inputContainer, { backgroundColor: weather ? '#F0F8E8' : 'white' }]}>
+              <View style={[styles.inputContainer, { backgroundColor: weather.includes('Hämtar') || weather.includes('Kunde inte') ? '#FFF8E1' : '#F0F8E8' }]}>
                 <Cloud size={20} color="#8FBC8F" />
                 <TextInput
                   style={styles.input}
                   value={weather}
                   onChangeText={setWeather}
-                  placeholder="Hämtar väderdata..."
+                  placeholder="Väderdata..."
                   editable={true}
                   placeholderTextColor="#8B7355"
                 />
               </View>
+              <Text style={styles.weatherNote}>
+                Väderdata hämtas automatiskt från din plats. Du kan redigera om det behövs.
+              </Text>
             </View>
 
             <View style={styles.row}>
@@ -1111,6 +1170,12 @@ const styles = StyleSheet.create({
   colorText: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  weatherNote: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   observationCategory: {
     marginBottom: 16,
