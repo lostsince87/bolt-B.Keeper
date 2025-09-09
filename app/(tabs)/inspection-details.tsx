@@ -404,13 +404,14 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 24,
     marginBottom: 16,
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    minWidth: 120,
   },
   infoText: {
     marginLeft: 8,
