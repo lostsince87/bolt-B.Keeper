@@ -144,17 +144,16 @@ export default function InspectionDetailsScreen() {
           {/* Basic Info Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Grundinformation</Text>
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Kupa</Text>
-                <Text style={styles.infoValue}>{inspection.hive}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Calendar size={20} color="#8B7355" />
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Datum</Text>
-                  <Text style={styles.infoValue}>{inspection.date}</Text>
-                </View>
+            <View style={styles.hiveNameSection}>
+              <Text style={styles.infoLabel}>Kupa</Text>
+              <Text style={styles.hiveNameValue}>{inspection.hive}</Text>
+            </View>
+            
+            <View style={styles.dateSection}>
+              <Calendar size={20} color="#8B7355" />
+              <View style={styles.infoText}>
+                <Text style={styles.infoLabel}>Datum</Text>
+                <Text style={styles.infoValue}>{inspection.date}</Text>
               </View>
             </View>
             
@@ -404,8 +403,22 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: 24,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  hiveNameSection: {
+    marginBottom: 16,
+  },
+  hiveNameValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginTop: 4,
+  },
+  dateSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
   },
   infoItem: {
