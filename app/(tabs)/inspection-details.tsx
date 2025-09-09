@@ -163,7 +163,6 @@ export default function InspectionDetailsScreen() {
                 <Text style={styles.infoLabel}>Väder</Text>
                 <Text style={styles.infoValue}>{inspection.weather}</Text>
               </View>
-              <Thermometer size={20} color="#8B7355" />
               <Text style={styles.temperatureText}>{inspection.temperature}°C</Text>
             </View>
           </View>
