@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight, Share2, Users, LogOut } from 'lucide-react-native';
+import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight, Share2 } from 'lucide-react-native';
 import { Snowflake, Baby, OctagonAlert as AlertOctagon } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
@@ -100,47 +100,39 @@ export default function HivesScreen() {
   // ============================================
   // STATE VARIABLER (State Variables)
   // ============================================
-  const [apiaries, setApiaries] = useState([]);
+  const [hives, setHives] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
-  const [selectedApiary, setSelectedApiary] = useState(null);
-  const mountedRef = useRef(true);
 
   // ============================================
   // DATA LADDNING (Data Loading)
   // ============================================
   useEffect(() => {
-    mountedRef.current = true;
-    
-    const loadApiaries = async () => {
+    const loadHives = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
-          // Load apiaries from Supabase if user is logged in
-          await loadApiariesFromSupabase();
+          // Load hives from Supabase if user is logged in
+          await loadHivesFromSupabase();
         } else {
           // Load from AsyncStorage if not logged in
-          await loadApiariesFromStorage();
+          await loadHivesFromStorage();
         }
       } catch (error) {
-        console.log('Could not load apiaries from AsyncStorage:', error);
-        await loadApiariesFromStorage(); // Fallback to local storage
+        console.log('Could not load hives from AsyncStorage:', error);
+        await loadHivesFromStorage(); // Fallback to local storage
       }
     };
     
-    loadApiaries();
-    
-    return () => {
-      mountedRef.current = false;
-    };
+    loadHives();
   }, []);
 
-  const loadApiariesFromSupabase = async () => {
+  const loadHivesFromSupabase = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Hämta användarens profil
+      // Get user's profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
@@ -149,86 +141,71 @@ export default function HivesScreen() {
 
       if (!profile) return;
 
-      // Hämta bigårdar där användaren är medlem
-      const { data: membershipData } = await supabase
-        .from('apiary_members')
+      // Get hives from apiaries user is member of
+      const { data: hiveData } = await supabase
+        .from('hives')
         .select(`
-          role,
-          apiaries (
-            id,
+          *,
+          apiaries!inner (
             name,
-            description,
             location,
-            owner_id,
-            invite_code,
-            created_at
+            apiary_members!inner (
+              profile_id
+            )
           )
         `)
-        .eq('profile_id', profile.id);
+        .eq('apiaries.apiary_members.profile_id', profile.id);
 
-      // Hämta bigårdar från delad åtkomst
-      const { data: sharedApiaries } = await supabase
+      // Get hives from direct sharing
+      const { data: sharedHives } = await supabase
         .from('shared_access')
         .select(`
-          access_level,
-          apiaries (
-            id,
-            name,
-            description,
-            location,
-            owner_id,
-            invite_code,
-            created_at
+          hives (
+            *,
+            apiaries (
+              name,
+              location
+            )
           )
         `)
         .eq('profile_id', profile.id)
-        .eq('resource_type', 'apiary');
+        .eq('resource_type', 'hive');
 
-      // Kombinera alla bigårdar
-      const allApiaries = [];
-      
-      // Lägg till medlemskap-bigårdar
-      if (membershipData) {
-        membershipData.forEach(membership => {
-          if (membership.apiaries) {
-            allApiaries.push({
-              ...membership.apiaries,
-              role: membership.role,
-              isOwner: membership.apiaries.owner_id === profile.id,
-              isShared: membership.apiaries.owner_id !== profile.id,
-              hives: [] // Kommer laddas senare när bigård väljs
-            });
-          }
-        });
-      }
+      // Combine and format hives
+      const allHives = [
+        ...(hiveData || []),
+        ...(sharedHives?.map(sh => sh.hives).filter(Boolean) || [])
+      ];
 
-      // Lägg till delade bigårdar
-      if (sharedApiaries) {
-        sharedApiaries.forEach(shared => {
-          if (shared.apiaries) {
-            allApiaries.push({
-              ...shared.apiaries,
-              role: shared.access_level,
-              isOwner: false,
-              isShared: true,
-              hives: [] // Kommer laddas senare när bigård väljs
-            });
-          }
-        });
-      }
+      // Convert to local format
+      const formattedHives = allHives.map(hive => ({
+        id: hive.id,
+        name: hive.name,
+        location: hive.location || hive.apiaries?.location || 'Okänd plats',
+        lastInspection: hive.last_inspection,
+        status: hive.status,
+        population: hive.population,
+        varroa: hive.varroa,
+        honey: hive.honey,
+        frames: hive.frames,
+        hasQueen: hive.has_queen,
+        queenMarked: hive.queen_marked,
+        queenColor: hive.queen_color,
+        queenWingClipped: hive.queen_wing_clipped,
+        queenAddedDate: hive.queen_added_date,
+        isNucleus: hive.is_nucleus,
+        isWintered: hive.is_wintered,
+        notes: hive.notes,
+      }));
 
-      if (mountedRef.current) {
-        setApiaries(allApiaries);
-      }
+      setHives(formattedHives);
     } catch (error) {
-      console.error('Error loading apiaries from Supabase:', error);
-      if (mountedRef.current) {
-        await loadApiariesFromStorage(); // Fallback
-      }
+      console.error('Error loading hives from Supabase:', error);
+      await loadHivesFromStorage(); // Fallback
     }
   };
 
-  const loadApiariesFromStorage = async () => {
+  const loadHivesFromStorage = async () => {
     try {
       const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
       const validHives = savedHives.filter(hive => hive && typeof hive === 'object' && hive.id);
@@ -291,41 +268,14 @@ export default function HivesScreen() {
             isWintered: false,
           },
         ];
-        
-        // Gruppera i en default bigård
-        const defaultApiary = {
-          id: 'local-default',
-          name: 'Min bigård',
-          location: 'Lokal lagring',
-          isOwner: true,
-          isShared: false,
-          role: 'owner',
-          hives: defaultHives
-        };
-        
-        if (mountedRef.current) {
-          setApiaries([defaultApiary]);
-        }
+        setHives(defaultHives);
         await AsyncStorage.setItem('hives', JSON.stringify(defaultHives));
       } else {
-        const localApiary = {
-          id: 'local',
-          name: 'Mina kupor',
-          location: 'Lokal lagring',
-          isOwner: true,
-          isShared: false,
-          role: 'owner',
-          hives: validHives
-        };
-        if (mountedRef.current) {
-          setApiaries([localApiary]);
-        }
+        setHives(validHives);
       }
     } catch (error) {
       console.log('Error loading from storage:', error);
-      if (mountedRef.current) {
-        setApiaries([]);
-      }
+      setHives([]);
     }
   };
 
@@ -361,13 +311,8 @@ export default function HivesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const updatedApiaries = apiaries.map(apiary => ({
-                ...apiary,
-                hives: apiary.hives.filter(hive => hive.id !== hiveId)
-              }));
-              setApiaries(updatedApiaries);
-              
-              const allHives = updatedApiaries.flatMap(a => a.hives);
+              const updatedHives = hives.filter(hive => hive.id !== hiveId);
+              setHives(updatedHives);
               await AsyncStorage.setItem('hives', JSON.stringify(updatedHives));
               
               // Also remove related inspections
@@ -384,116 +329,14 @@ export default function HivesScreen() {
     );
   };
 
-  // Hantera klick på bigård
-  const handleApiaryPress = async (apiary) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user && apiary.id !== 'local' && apiary.id !== 'local-default') {
-        // Ladda kupor för vald bigård från Supabase
-        const { data: hiveData } = await supabase
-          .from('hives')
-          .select('*')
-          .eq('apiary_id', apiary.id);
-
-        // Hämta även individuellt delade kupor
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        const { data: sharedHives } = await supabase
-          .from('shared_access')
-          .select(`
-            hives (*)
-          `)
-          .eq('profile_id', profile?.id)
-          .eq('resource_type', 'hive');
-
-        const allHives = [
-          ...(hiveData || []).map(hive => ({
-            id: hive.id,
-            name: hive.name,
-            location: hive.location || apiary.location || 'Okänd plats',
-            lastInspection: hive.last_inspection,
-            status: hive.status,
-            population: hive.population,
-            varroa: hive.varroa,
-            honey: hive.honey,
-            frames: hive.frames,
-            hasQueen: hive.has_queen,
-            queenMarked: hive.queen_marked,
-            queenColor: hive.queen_color,
-            queenWingClipped: hive.queen_wing_clipped,
-            queenAddedDate: hive.queen_added_date,
-            isNucleus: hive.is_nucleus,
-            isWintered: hive.is_wintered,
-            notes: hive.notes,
-            isShared: false
-          })),
-          ...(sharedHives?.map(sh => sh.hives).filter(Boolean) || []).map(hive => ({
-            id: hive.id,
-            name: hive.name,
-            location: hive.location || 'Okänd plats',
-            lastInspection: hive.last_inspection,
-            status: hive.status,
-            population: hive.population,
-            varroa: hive.varroa,
-            honey: hive.honey,
-            frames: hive.frames,
-            hasQueen: hive.has_queen,
-            queenMarked: hive.queen_marked,
-            queenColor: hive.queen_color,
-            queenWingClipped: hive.queen_wing_clipped,
-            queenAddedDate: hive.queen_added_date,
-            isNucleus: hive.is_nucleus,
-            isWintered: hive.is_wintered,
-            notes: hive.notes,
-            isShared: true
-          }))
-        ];
-
-        if (mountedRef.current) {
-          setSelectedApiary({
-            ...apiary,
-            hives: allHives
-          });
-        }
-      } else {
-        // Lokal bigård - använd befintliga kupor
-        if (mountedRef.current) {
-          setSelectedApiary(apiary);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading hives for apiary:', error);
-      if (mountedRef.current) {
-        setSelectedApiary(apiary); // Fallback
-      }
-    }
+  // Hantera klick på plats
+  const handleLocationPress = (location: string) => {
+    setSelectedLocation(location);
   };
 
-  // Gå tillbaka till bigårdsvy
-  const handleBackToApiaries = () => {
-    if (mountedRef.current) {
-      setSelectedApiary(null);
-    }
-  };
-
-  // Lämna delad bigård/kupa
-  const leaveSharedResource = async (apiary) => {
-    Alert.alert(
-      'Lämna delning',
-      `Är du säker på att du vill lämna "${apiary.name}"? Du kommer inte längre ha åtkomst till denna bigård.`,
-      [
-        { text: 'Avbryt', style: 'cancel' },
-        { text: 'Lämna', style: 'destructive', onPress: () => {
-          // Implementera leave-funktionalitet här
-          Alert.alert('Info', 'Funktionen kommer snart!');
-        }}
-      ]
-    );
+  // Gå tillbaka till platsvy
+  const handleBackToLocations = () => {
+    setSelectedLocation('');
   };
 
   // Skapa och dela kod för specifik kupa
@@ -543,59 +386,17 @@ export default function HivesScreen() {
     }
   };
 
-  // Skapa och dela kod för bigård
-  const createAndShareApiaryCode = async (apiary) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Fel', 'Du måste vara inloggad för att dela bigårdar');
-        return;
-      }
-
-      // Hämta användarens profil
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) {
-        Alert.alert('Fel', 'Användarprofil hittades inte');
-        return;
-      }
-
-      // Skapa delningskod för bigården
-      const { data: sharingCode, error } = await supabase
-        .from('sharing_codes')
-        .insert({
-          resource_type: 'apiary',
-          resource_id: apiary.id,
-          created_by: profile.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Dela koden
-      const shareResult = await Share.share({
-        message: `Gå med i min B.Keeper bigård "${apiary.name}"!\n\nAnvänd delningskoden: ${sharingCode.code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
-        title: `Inbjudan till ${apiary.name}`
-      });
-      
-      console.log('Apiary share result:', shareResult);
-    } catch (error) {
-      console.error('Error sharing apiary:', error);
-      Alert.alert('Fel', 'Kunde inte skapa delningskod för bigården: ' + error.message);
-    }
-  };
-
   // ============================================
   // BERÄKNADE VÄRDEN (Calculated Values)
   // ============================================
   
-  // Få alla kupor från vald bigård
-  const hivesInApiary = selectedApiary ? selectedApiary.hives : [];
+  // Få unika platser från kupor
+  const locations = [...new Set(hives.map(hive => hive.location))];
+  
+  // Få kupor för vald plats
+  const hivesInLocation = selectedLocation 
+    ? hives.filter(hive => hive.location === selectedLocation)
+    : [];
 
   // ============================================
   // RENDER (UI Rendering)
@@ -609,13 +410,13 @@ export default function HivesScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {selectedApiary && (
-              <TouchableOpacity style={styles.backToApiariesButton} onPress={handleBackToApiaries}>
-                <Text style={styles.backToApiariesText}>← Bigårdar</Text>
+            {selectedLocation && (
+              <TouchableOpacity style={styles.backToLocationsButton} onPress={handleBackToLocations}>
+                <Text style={styles.backToLocationsText}>← Platser</Text>
               </TouchableOpacity>
             )}
             <Text style={styles.title}>
-              {selectedApiary ? selectedApiary.name : 'Mina bigårdar'}
+              {selectedLocation ? selectedLocation : 'Mina kupor'}
             </Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-hive')}>
@@ -624,59 +425,53 @@ export default function HivesScreen() {
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {!selectedApiary ? (
-            // Show apiaries
+          {!selectedLocation ? (
+            // Show locations
             <>
-              {apiaries.map((apiary) => {
+              {locations.map((location) => {
+                const hivesAtLocation = hives.filter(hive => hive.location === location);
                 return (
                   <TouchableOpacity 
-                    key={apiary.id} 
-                    style={[styles.apiaryCard, apiary.isShared && styles.sharedApiaryCard]}
-                    onPress={() => handleApiaryPress(apiary)}
+                    key={location} 
+                    style={styles.locationCard}
+                    onPress={() => handleLocationPress(location)}
                   >
-                    <View style={styles.apiaryHeader}>
+                    <View style={styles.locationHeader}>
                       <View>
-                        <View style={styles.apiaryTitleRow}>
-                          <Text style={styles.apiaryName}>{apiary.name}</Text>
-                          {apiary.isShared && (
-                            <View style={styles.sharedBadge}>
-                              <Users size={12} color="white" />
-                              <Text style={styles.sharedBadgeText}>Delad</Text>
+                        <Text style={styles.locationName}>{location}</Text>
+                        <Text style={styles.locationCount}>
+                          {hivesAtLocation.length} kup{hivesAtLocation.length !== 1 ? 'or' : 'a'}
+                        </Text>
+                        <View style={styles.hiveIndicators}>
+                          {hivesAtLocation.some(hive => hive.isNucleus) && (
+                            <View style={styles.indicator}>
+                              <Baby size={12} color="#8FBC8F" />
+                            </View>
+                          )}
+                          {hivesAtLocation.some(hive => hive.isWintered) && (
+                            <View style={styles.indicator}>
+                              <Snowflake size={12} color="#87CEEB" />
+                            </View>
+                          )}
+                          {hivesAtLocation.some(hive => !hive.hasQueen) && (
+                            <View style={styles.indicator}>
+                              <AlertOctagon size={12} color="#E74C3C" />
                             </View>
                           )}
                         </View>
-                        {apiary.description && (
-                          <Text style={styles.apiaryDescription}>{apiary.description}</Text>
-                        )}
-                        <View style={styles.apiaryLocation}>
-                          <MapPin size={12} color="#8B7355" />
-                          <Text style={styles.locationText}>{apiary.location || 'Okänd plats'}</Text>
-                        </View>
-                        <View style={styles.roleRow}>
-                          <Text style={styles.roleText}>
-                            {apiary.role === 'owner' ? 'Ägare' : 
-                             apiary.role === 'admin' ? 'Admin' : 'Medlem'}
-                          </Text>
-                        </View>
                       </View>
-                      <View style={styles.apiaryActions}>
-                        {apiary.isShared ? (
-                          <TouchableOpacity 
-                            style={styles.leaveButton}
-                            onPress={() => leaveSharedResource(apiary)}
-                          >
-                            <LogOut size={16} color="#E74C3C" />
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity 
-                            style={styles.shareApiaryButton}
-                            onPress={() => createAndShareApiaryCode(apiary)}
-                          >
-                            <Share2 size={16} color="#F7B801" />
-                          </TouchableOpacity>
-                        )}
-                        <ChevronRight size={20} color="#8B7355" />
-                      </View>
+                      <ChevronRight size={24} color="#8B7355" />
+                    </View>
+                    <View style={styles.locationStats}>
+                      {hivesAtLocation.slice(0, 3).map((hive, index) => (
+                        <View key={hive.id} style={styles.locationHivePreview}>
+                          <Text style={styles.previewHiveName}>{hive.name}</Text>
+                          <View style={[styles.previewStatus, { backgroundColor: getStatusColor(hive.status) }]} />
+                        </View>
+                      ))}
+                      {hivesAtLocation.length > 3 && (
+                        <Text style={styles.moreHives}>+{hivesAtLocation.length - 3} till</Text>
+                      )}
                     </View>
                   </TouchableOpacity>
                 );
@@ -687,12 +482,12 @@ export default function HivesScreen() {
               </TouchableOpacity>
             </>
           ) : (
-            // Show hives for selected apiary
+            // Show hives for selected location
             <>
-              {hivesInApiary.map((hive) => (
+              {hivesInLocation.map((hive) => (
                 <TouchableOpacity 
                   key={hive.id} 
-                  style={[styles.hiveCard, hive.isShared && styles.sharedHiveCard]}
+                  style={styles.hiveCard}
                   onPress={() => router.push({
                     pathname: '/hive-details',
                     params: { hiveId: hive.id }
@@ -701,12 +496,6 @@ export default function HivesScreen() {
                   <View style={styles.hiveHeader}>
                     <View>
                       <Text style={styles.hiveName}>{hive.name}</Text>
-                      {hive.isShared && (
-                        <View style={styles.sharedHiveIndicator}>
-                          <Users size={12} color="#8FBC8F" />
-                          <Text style={styles.sharedHiveText}>Delad kupa</Text>
-                        </View>
-                      )}
                       <View style={styles.locationRow}>
                         <MapPin size={14} color="#8B7355" />
                         <Text style={styles.location}>{hive.location}</Text>
@@ -766,9 +555,9 @@ export default function HivesScreen() {
                     <View style={styles.footerRight}>
                       <TouchableOpacity 
                         style={styles.shareHiveButton}
-                        onPress={() => hive.isShared ? null : createAndShareHiveCode(hive)}
+                        onPress={() => createAndShareHiveCode(hive)}
                       >
-                        <Share2 size={16} color={hive.isShared ? "#8B7355" : "#F7B801"} />
+                        <Share2 size={16} color="#F7B801" />
                       </TouchableOpacity>
                       <Text style={styles.frames}>Ramar: {hive.frames}</Text>
                       {hive.hasQueen && hive.queenAddedDate && (
@@ -810,10 +599,10 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  backToApiariesButton: {
+  backToLocationsButton: {
     marginBottom: 4,
   },
-  backToApiariesText: {
+  backToLocationsText: {
     fontSize: 14,
     color: '#8B7355',
     fontWeight: '600',
@@ -850,21 +639,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
-  },
-  sharedHiveCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#8FBC8F',
-  },
-  sharedHiveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  sharedHiveText: {
-    fontSize: 12,
-    color: '#8FBC8F',
-    marginLeft: 4,
-    fontWeight: '600',
   },
   hiveHeader: {
     flexDirection: 'row',
@@ -986,7 +760,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontWeight: '600',
   },
-  apiaryCard: {
+  locationCard: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
@@ -997,91 +771,28 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  sharedApiaryCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#8FBC8F',
-  },
-  apiaryHeader: {
+  locationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  apiaryTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  apiaryName: {
+  locationName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#8B4513',
-    marginRight: 8,
+    marginBottom: 4,
   },
-  sharedBadge: {
-    backgroundColor: '#8FBC8F',
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  sharedBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  apiaryCount: {
+  locationCount: {
     fontSize: 14,
     color: '#8B7355',
-    marginBottom: 4,
   },
-  apiaryDescription: {
-    fontSize: 12,
-    color: '#8B7355',
-    marginBottom: 4,
-    fontStyle: 'italic',
-  },
-  roleRow: {
-    marginTop: 4,
-  },
-  roleText: {
-    fontSize: 12,
-    color: '#8B7355',
-    fontWeight: '600',
-  },
-  apiaryLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  locationText: {
-    fontSize: 12,
-    color: '#8B7355',
-    marginLeft: 4,
-  },
-  apiaryActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  shareApiaryButton: {
-    backgroundColor: '#F7B801' + '20',
-    borderRadius: 16,
-    padding: 8,
-  },
-  leaveButton: {
-    backgroundColor: '#E74C3C' + '20',
-    borderRadius: 16,
-    padding: 8,
-  },
-  apiaryStats: {
+  locationStats: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  apiaryHivePreview: {
+  locationHivePreview: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F8F8',
