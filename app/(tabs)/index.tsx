@@ -24,9 +24,9 @@ export default function HomeScreen() {
         if (savedTasks.length === 0) {
           // Default tasks if none saved
           const defaultTasks = [
-            { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
-            { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
-            { id: 3, task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
+            { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', time: '14:00', priority: 'hög', color: '#E74C3C' },
+            { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', time: '10:00', priority: 'medel', color: '#F39C12' },
+            { id: 3, task: 'Honung slungning', date: '3 dagar', time: '09:00', priority: 'låg', color: '#8FBC8F' },
           ];
           setTasks(defaultTasks);
           await AsyncStorage.setItem('tasks', JSON.stringify(defaultTasks));
@@ -222,7 +222,7 @@ export default function HomeScreen() {
                   <Text style={styles.taskTitle}>{task.task}</Text>
                   <View style={styles.taskMeta}>
                     <Calendar size={14} color="#8B7355" />
-                    <Text style={styles.taskDate}>{task.date}</Text>
+                    <Text style={styles.taskDate}>{task.date} {task.time}</Text>
                     <Text style={[styles.taskPriorityText, { color: task.color }]}>
                       <Text>• {task.priority.toUpperCase()} PRIORITET</Text>
                     </Text>
