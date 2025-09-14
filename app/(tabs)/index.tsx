@@ -181,11 +181,9 @@ export default function HomeScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <Image 
-                source={require('@/assets/images/icon.png')} 
-                style={styles.logo}
-                resizeMode="contain"
-              />
+              <View style={styles.logoPlaceholder}>
+                <Text style={styles.logoText}>B.Keeper</Text>
+              </View>
             </View>
           </View>
 
@@ -285,9 +283,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 0,
   },
-  logo: {
+  logoPlaceholder: {
     height: 100,
     width: 160,
+    backgroundColor: '#F7B801',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
   },
   section: {
     paddingHorizontal: 20,
