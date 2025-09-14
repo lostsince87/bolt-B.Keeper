@@ -162,19 +162,15 @@ export default function ApiariesScreen() {
       if (error) throw error;
 
       // Dela koden
-      await Share.share({
+      const shareResult = await Share.share({
         message: `Gå med i min B.Keeper bigård "${apiary.name}"!\n\nAnvänd delningskoden: ${sharingCode.code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
         title: `Inbjudan till ${apiary.name}`
       });
+      
+      console.log('Share result:', shareResult);
     } catch (error) {
       console.error('Error creating sharing code:', error);
-      Alert.alert(
-        'Fel',
-        'Kunde inte skapa delningskod',
-        [
-          { text: 'OK' }
-        ]
-      );
+      Alert.alert('Fel', 'Kunde inte skapa delningskod: ' + error.message);
     }
   };
 
