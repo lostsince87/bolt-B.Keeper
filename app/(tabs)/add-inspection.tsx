@@ -9,7 +9,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
 // OpenAI integration for inspection analysis
-const OPENAI_API_KEY = 'your-openai-api-key-here'; // This should be in environment variables
+// VIKTIGT: Ersätt med din riktiga OpenAI API-nyckel
+const OPENAI_API_KEY = 'sk-din-openai-api-nyckel-här';
+
+// Alternativt: Använd miljövariabel (rekommenderat för produktion)
+// const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
 const analyzeInspectionWithAI = async (inspectionData) => {
   try {
