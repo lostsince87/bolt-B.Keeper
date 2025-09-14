@@ -116,3 +116,26 @@ export interface Task {
   created_at: string;
   updated_at: string;
 }
+
+export interface SharingCode {
+  id: string;
+  code: string;
+  resource_type: 'apiary' | 'hive';
+  resource_id: string;
+  created_by: string;
+  expires_at?: string;
+  max_uses?: number;
+  current_uses: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface SharedAccess {
+  id: string;
+  sharing_code_id: string;
+  profile_id: string;
+  resource_type: 'apiary' | 'hive';
+  resource_id: string;
+  access_level: 'member' | 'admin';
+  joined_at: string;
+}

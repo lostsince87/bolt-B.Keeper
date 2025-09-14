@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Plus, Users, Share2, MapPin, Crown, Copy, Settings, ChevronRight } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { supabase, Apiary, ApiaryMember, Profile } from '@/lib/supabase';
+import { supabase, Apiary, ApiaryMember, Profile, SharingCode } from '@/lib/supabase';
 
 export default function ApiariesScreen() {
   const [apiaries, setApiaries] = useState<(Apiary & { members: (ApiaryMember & { profile: Profile })[], role: string })[]>([]);
@@ -134,17 +134,43 @@ export default function ApiariesScreen() {
     }
   };
 
-  const shareInviteCode = async (apiary: Apiary) => {
+  const createAndShareCode = async (apiary: Apiary) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Hämta användarens profil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) return;
+
+      // Skapa delningskod
+      const { data: sharingCode, error } = await supabase
+        .from('sharing_codes')
+        .insert({
+          resource_type: 'apiary',
+          resource_id: apiary.id,
+          created_by: profile.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Dela koden
       await Share.share({
-        message: `Gå med i min B.Keeper bigård "${apiary.name}"!\n\nAnvänd inbjudningskoden: ${apiary.invite_code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
+        message: `Gå med i min B.Keeper bigård "${apiary.name}"!\n\nAnvänd delningskoden: ${sharingCode.code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
         title: `Inbjudan till ${apiary.name}`
       });
     } catch (error) {
-      // Fallback - kopiera till urklipp
+      console.error('Error creating sharing code:', error);
       Alert.alert(
-        'Inbjudningskod',
-        `Bigård: ${apiary.name}\nKod: ${apiary.invite_code}`,
+        'Fel',
+        'Kunde inte skapa delningskod',
         [
           { text: 'OK' }
         ]
@@ -319,10 +345,10 @@ export default function ApiariesScreen() {
                   {apiary.role === 'owner' && (
                     <TouchableOpacity 
                       style={styles.shareButton}
-                      onPress={() => shareInviteCode(apiary)}
+                      onPress={() => createAndShareCode(apiary)}
                     >
                       <Share2 size={16} color="#F7B801" />
-                      <Text style={styles.shareButtonText}>Bjud in</Text>
+                      <Text style={styles.shareButtonText}>Dela</Text>
                     </TouchableOpacity>
                   )}
                 </View>
