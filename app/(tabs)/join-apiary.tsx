@@ -18,14 +18,14 @@ export default function JoinApiaryScreen() {
 
     setLoading(true);
     try {
-      const { data: result, error } = await supabase.rpc('join_via_sharing_code', {
+      const { data, error } = await supabase.rpc('join_via_sharing_code', {
         sharing_code_param: inviteCode.trim()
       });
 
       if (error) throw error;
 
-      if (result.success) {
-        const resourceType = result.resource_type === 'apiary' ? 'bigården' : 'kupan';
+      if (data.success) {
+        const resourceType = data.resource_type === 'apiary' ? 'bigården' : 'kupan';
         Alert.alert(
           'Välkommen!',
           `Du har fått åtkomst till ${resourceType}!`,
@@ -34,7 +34,7 @@ export default function JoinApiaryScreen() {
               text: 'OK',
               onPress: () => {
                 setInviteCode('');
-                if (result.resource_type === 'apiary') {
+                if (data.resource_type === 'apiary') {
                   router.push('/apiaries');
                 } else {
                   router.push('/hives');
@@ -44,7 +44,7 @@ export default function JoinApiaryScreen() {
           ]
         );
       } else {
-        Alert.alert('Fel', result.error || 'Okänt fel');
+        Alert.alert('Fel', data.error);
       }
     } catch (error) {
       console.error('Error joining apiary:', error);

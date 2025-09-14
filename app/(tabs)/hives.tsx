@@ -109,175 +109,81 @@ export default function HivesScreen() {
   useEffect(() => {
     const loadHives = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
+        // Filtrera bort ogiltiga objekt från AsyncStorage
+        const validHives = savedHives.filter(hive => hive && typeof hive === 'object' && hive.id);
         
-        if (user) {
-          // Load hives from Supabase if user is logged in
-          await loadHivesFromSupabase();
+        if (validHives.length === 0) {
+          // Standardkupor om inga är sparade
+          const defaultHives = [
+            {
+              id: 1,
+              name: 'Kupa Alpha',
+              location: 'Norra ängen',
+              lastInspection: '2024-01-15',
+              status: 'excellent',
+              population: 'Stark',
+              varroa: '1.2/dag',
+              honey: '25 kg',
+              frames: '18/20',
+              hasQueen: true,
+              queenMarked: true,
+              queenColor: 'yellow',
+              queenWingClipped: false,
+              queenAddedDate: '2024-01-01',
+              isNucleus: false,
+              isWintered: false,
+            },
+            {
+              id: 2,
+              name: 'Kupa Beta',
+              location: 'Södra skogen',
+              lastInspection: '2024-01-12',
+              status: 'good',
+              population: 'Medel',
+              varroa: '3.2/dag',
+              honey: '18 kg',
+              frames: '14/20',
+              hasQueen: true,
+              queenMarked: false,
+              queenColor: null,
+              queenWingClipped: true,
+              queenAddedDate: '2023-12-15',
+              isNucleus: false,
+              isWintered: true,
+            },
+            {
+              id: 3,
+              name: 'Kupa Gamma',
+              location: 'Östra fältet',
+              lastInspection: '2024-01-10',
+              status: 'warning',
+              population: 'Svag',
+              varroa: '6.8/dag',
+              honey: '8 kg',
+              frames: '10/20',
+              hasQueen: false,
+              queenMarked: null,
+              queenColor: null,
+              queenWingClipped: null,
+              queenAddedDate: null,
+              isNucleus: false,
+              isWintered: false,
+            },
+          ];
+          setHives(defaultHives);
+          await AsyncStorage.setItem('hives', JSON.stringify(defaultHives));
         } else {
-          // Load from AsyncStorage if not logged in
-          await loadHivesFromStorage();
+          setHives(savedHives);
         }
       } catch (error) {
         console.log('Could not load hives from AsyncStorage:', error);
-        await loadHivesFromStorage(); // Fallback to local storage
+        setHives([]);
       }
     };
     
     loadHives();
   }, []);
-
-  const loadHivesFromSupabase = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get user's profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) return;
-
-      // Get hives from apiaries user is member of
-      const { data: hiveData } = await supabase
-        .from('hives')
-        .select(`
-          *,
-          apiaries!inner (
-            name,
-            location,
-            apiary_members!inner (
-              profile_id
-            )
-          )
-        `)
-        .eq('apiaries.apiary_members.profile_id', profile.id);
-
-      // Get hives from direct sharing
-      const { data: sharedHives } = await supabase
-        .from('shared_access')
-        .select(`
-          hives (
-            *,
-            apiaries (
-              name,
-              location
-            )
-          )
-        `)
-        .eq('profile_id', profile.id)
-        .eq('resource_type', 'hive');
-
-      // Combine and format hives
-      const allHives = [
-        ...(hiveData || []),
-        ...(sharedHives?.map(sh => sh.hives).filter(Boolean) || [])
-      ];
-
-      // Convert to local format
-      const formattedHives = allHives.map(hive => ({
-        id: hive.id,
-        name: hive.name,
-        location: hive.location || hive.apiaries?.location || 'Okänd plats',
-        lastInspection: hive.last_inspection,
-        status: hive.status,
-        population: hive.population,
-        varroa: hive.varroa,
-        honey: hive.honey,
-        frames: hive.frames,
-        hasQueen: hive.has_queen,
-        queenMarked: hive.queen_marked,
-        queenColor: hive.queen_color,
-        queenWingClipped: hive.queen_wing_clipped,
-        queenAddedDate: hive.queen_added_date,
-        isNucleus: hive.is_nucleus,
-        isWintered: hive.is_wintered,
-        notes: hive.notes,
-      }));
-
-      setHives(formattedHives);
-    } catch (error) {
-      console.error('Error loading hives from Supabase:', error);
-      await loadHivesFromStorage(); // Fallback
-    }
-  };
-
-  const loadHivesFromStorage = async () => {
-    try {
-      const savedHives = JSON.parse(await AsyncStorage.getItem('hives') || '[]');
-      const validHives = savedHives.filter(hive => hive && typeof hive === 'object' && hive.id);
-      
-      if (validHives.length === 0) {
-        // Default hives if none saved
-        const defaultHives = [
-          {
-            id: 1,
-            name: 'Kupa Alpha',
-            location: 'Norra ängen',
-            lastInspection: '2024-01-15',
-            status: 'excellent',
-            population: 'Stark',
-            varroa: '1.2/dag',
-            honey: '25 kg',
-            frames: '18/20',
-            hasQueen: true,
-            queenMarked: true,
-            queenColor: 'yellow',
-            queenWingClipped: false,
-            queenAddedDate: '2024-01-01',
-            isNucleus: false,
-            isWintered: false,
-          },
-          {
-            id: 2,
-            name: 'Kupa Beta',
-            location: 'Södra skogen',
-            lastInspection: '2024-01-12',
-            status: 'good',
-            population: 'Medel',
-            varroa: '3.2/dag',
-            honey: '18 kg',
-            frames: '14/20',
-            hasQueen: true,
-            queenMarked: false,
-            queenColor: null,
-            queenWingClipped: true,
-            queenAddedDate: '2023-12-15',
-            isNucleus: false,
-            isWintered: true,
-          },
-          {
-            id: 3,
-            name: 'Kupa Gamma',
-            location: 'Östra fältet',
-            lastInspection: '2024-01-10',
-            status: 'warning',
-            population: 'Svag',
-            varroa: '6.8/dag',
-            honey: '8 kg',
-            frames: '10/20',
-            hasQueen: false,
-            queenMarked: null,
-            queenColor: null,
-            queenWingClipped: null,
-            queenAddedDate: null,
-            isNucleus: false,
-            isWintered: false,
-          },
-        ];
-        setHives(defaultHives);
-        await AsyncStorage.setItem('hives', JSON.stringify(defaultHives));
-      } else {
-        setHives(validHives);
-      }
-    } catch (error) {
-      console.log('Error loading from storage:', error);
-      setHives([]);
-    }
-  };
 
   // ============================================
   // KONSTANTER (Constants)
@@ -374,15 +280,13 @@ export default function HivesScreen() {
       if (error) throw error;
 
       // Dela koden
-      const shareResult = await Share.share({
+      await Share.share({
         message: `Gå med och hjälp till med min bikupa "${hive.name}"!\n\nAnvänd delningskoden: ${sharingCode.code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
         title: `Inbjudan till ${hive.name}`
       });
-      
-      console.log('Hive share result:', shareResult);
     } catch (error) {
       console.error('Error creating hive sharing code:', error);
-      Alert.alert('Fel', 'Kunde inte skapa delningskod för kupan: ' + error.message);
+      Alert.alert('Fel', 'Kunde inte skapa delningskod för kupan');
     }
   };
 
