@@ -5,7 +5,7 @@ import { ArrowLeft, Calendar, Save, CircleAlert as AlertTriangle, Clock, Bell } 
 import { useState } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
+import * as Notifications from '@/utils/notifications';
 
 // Configure notifications
 Notifications.setNotificationHandler({
