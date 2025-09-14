@@ -1,16 +1,28 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Calendar, Save, CircleAlert as AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Save, CircleAlert as AlertTriangle, Clock, Bell } from 'lucide-react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+
+// Configure notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function AddTaskScreen() {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDate, setTaskDate] = useState('');
+  const [taskTime, setTaskTime] = useState('09:00');
   const [selectedPriority, setSelectedPriority] = useState('');
   const [notes, setNotes] = useState('');
+  const [enableReminder, setEnableReminder] = useState(true);
 
   const priorities = [
     { id: 'låg', label: 'Låg prioritet', color: '#8FBC8F' },
@@ -27,13 +39,55 @@ export default function AddTaskScreen() {
     'Beställa material',
   ];
 
-  const handleSave = () => {
+  const scheduleNotification = async (task) => {
+    if (!enableReminder) return null;
+    
+    try {
+      // Request notification permissions
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Påminnelser', 'Tillstånd för notifikationer krävs för påminnelser');
+        return null;
+      }
+
+      // Parse date and time
+      const [year, month, day] = taskDate.split('-').map(Number);
+      const [hours, minutes] = taskTime.split(':').map(Number);
+      const triggerDate = new Date(year, month - 1, day, hours, minutes);
+      
+      // Don't schedule if date is in the past
+      if (triggerDate <= new Date()) {
+        return null;
+      }
+
+      // Schedule notification
+      const notificationId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Biodlaruppgift påminnelse',
+          body: task.task,
+          data: { taskId: task.id, priority: task.priority },
+        },
+        trigger: triggerDate,
+      });
+
+      return notificationId;
+    } catch (error) {
+      console.log('Could not schedule notification:', error);
+      return null;
+    }
+  };
+
+  const handleSave = async () => {
     if (!taskTitle.trim()) {
       Alert.alert('Fel', 'Ange en uppgift');
       return;
     }
     if (!taskDate.trim()) {
       Alert.alert('Fel', 'Ange ett datum');
+      return;
+    }
+    if (!taskTime.trim()) {
+      Alert.alert('Fel', 'Ange en tid');
       return;
     }
     if (!selectedPriority) {
@@ -46,11 +100,18 @@ export default function AddTaskScreen() {
       id: Date.now(),
       task: taskTitle.trim(),
       date: taskDate.trim(),
+      time: taskTime.trim(),
       priority: selectedPriority,
       notes: notes.trim(),
       completed: false,
+      enableReminder,
+      notificationId: null,
       createdAt: new Date().toISOString(),
     };
+
+    // Schedule notification if enabled
+    const notificationId = await scheduleNotification(newTask);
+    newTask.notificationId = notificationId;
 
     // Save task to AsyncStorage
     const saveTask = async () => {
@@ -66,7 +127,7 @@ export default function AddTaskScreen() {
     saveTask().then(() => {
       Alert.alert(
         'Uppgift sparad!', 
-        `"${taskTitle}" har lagts till för ${taskDate}`,
+        `"${taskTitle}" har lagts till för ${taskDate} ${taskTime}${enableReminder && notificationId ? '\n\nPåminnelse inställd!' : ''}`,
         [{ text: 'OK', onPress: () => router.back() }]
       );
     });
@@ -137,6 +198,39 @@ export default function AddTaskScreen() {
                   placeholderTextColor="#8B7355"
                 />
               </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tid *</Text>
+              <View style={styles.inputContainer}>
+                <Clock size={20} color="#8B7355" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="09:00"
+                  value={taskTime}
+                  onChangeText={setTaskTime}
+                  placeholderTextColor="#8B7355"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Påminnelse</Text>
+              <TouchableOpacity
+                style={[
+                  styles.reminderToggle,
+                  enableReminder && styles.reminderToggleActive
+                ]}
+                onPress={() => setEnableReminder(!enableReminder)}
+              >
+                <Bell size={20} color={enableReminder ? 'white' : '#8B7355'} />
+                <Text style={[
+                  styles.reminderToggleText,
+                  enableReminder && styles.reminderToggleTextActive
+                ]}>
+                  {enableReminder ? 'Påminnelse aktiverad' : 'Ingen påminnelse'}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.inputGroup}>
@@ -355,5 +449,34 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  reminderToggle: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    borderColor: '#E8D5B7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  reminderToggleActive: {
+    backgroundColor: '#8FBC8F',
+    borderColor: '#8FBC8F',
+  },
+  reminderToggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8B7355',
+    marginLeft: 12,
+  },
+  reminderToggleTextActive: {
+    color: 'white',
   },
 });
