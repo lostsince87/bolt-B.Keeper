@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight, Share2, Users, LogOut } from 'lucide-react-native';
 import { Snowflake, Baby, OctagonAlert as AlertOctagon } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useState, useEffect } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { Alert, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
