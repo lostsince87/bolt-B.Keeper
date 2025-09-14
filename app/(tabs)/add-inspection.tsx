@@ -8,6 +8,109 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
+// OpenAI integration for inspection analysis
+const OPENAI_API_KEY = 'your-openai-api-key-here'; // This should be in environment variables
+
+const analyzeInspectionWithAI = async (inspectionData) => {
+  try {
+    const prompt = `
+Analysera denna biodlarinspektionsdata och ge konkreta iakttagelser och rekommendationer på svenska:
+
+Kupa: ${inspectionData.hive}
+Datum: ${inspectionData.date}
+Väder: ${inspectionData.weather}
+Yngelramar: ${inspectionData.broodFrames}/${inspectionData.totalFrames}
+Drottning sedd: ${inspectionData.queenSeen === true ? 'Ja' : inspectionData.queenSeen === false ? 'Nej' : 'Osäker'}
+Temperament: ${inspectionData.temperament || 'Ej angivet'}
+Varroa/dag: ${inspectionData.varroaPerDay || 'Ej mätt'}
+Invintring: ${inspectionData.isWintering ? 'Ja' : 'Nej'}
+Varroabehandling: ${inspectionData.isVarroaTreatment ? 'Ja' : 'Nej'}
+Anteckningar: ${inspectionData.notes || 'Inga'}
+
+Ge svar i följande JSON-format:
+{
+  "observations": ["observation1", "observation2", ...],
+  "recommendations": ["rekommendation1", "rekommendation2", ...],
+  "status": "excellent|good|warning|critical",
+  "priority_actions": ["åtgärd1", "åtgärd2", ...],
+  "next_inspection": "antal_dagar"
+}
+
+Fokusera på praktiska biodlarråd baserat på säsong, väder och kupens tillstånd.
+`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: 'Du är en erfaren biodlarexpert som ger praktiska råd baserat på inspektionsdata.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('OpenAI API error');
+    }
+
+    const data = await response.json();
+    const analysis = JSON.parse(data.choices[0].message.content);
+    
+    return analysis;
+  } catch (error) {
+    console.log('AI analysis failed:', error);
+    // Fallback to basic analysis
+    return generateBasicAnalysis(inspectionData);
+  }
+};
+
+const generateBasicAnalysis = (inspectionData) => {
+  const observations = [];
+  const recommendations = [];
+  let status = 'good';
+  const priority_actions = [];
+  
+  // Basic analysis logic
+  if (inspectionData.queenSeen === false) {
+    observations.push('Drottning ej sedd - kan vara drottninglös');
+    recommendations.push('Kontrollera för drottningceller eller lägg till ny drottning');
+    status = 'critical';
+    priority_actions.push('Drottningkontroll inom 3 dagar');
+  }
+  
+  if (inspectionData.varroaPerDay > 5) {
+    observations.push(`Hög varroabelastning (${inspectionData.varroaPerDay}/dag)`);
+    recommendations.push('Genomför varroabehandling omedelbart');
+    status = 'critical';
+    priority_actions.push('Varroabehandling inom 1 vecka');
+  }
+  
+  if (inspectionData.broodFrames < inspectionData.totalFrames * 0.3) {
+    observations.push('Låg yngelproduktion');
+    recommendations.push('Kontrollera drottningens äggläggning och näringstillgång');
+  }
+  
+  return {
+    observations,
+    recommendations,
+    status,
+    priority_actions,
+    next_inspection: status === 'critical' ? '3' : status === 'warning' ? '7' : '14'
+  };
+};
 export default function AddInspectionScreen() {
   const [selectedHive, setSelectedHive] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -210,48 +313,6 @@ export default function AddInspectionScreen() {
       return;
     }
 
-    // Calculate inspection rating based on observations and data
-    const calculateInspectionRating = () => {
-      let score = 3; // Start with neutral
-      
-      // Positive factors
-      if (queenSeen === true) score += 1;
-      if (varroaPerDay && varroaPerDay <= 2) score += 1;
-      if (temperament === 'Lugn') score += 0.5;
-      if (selectedObservations.includes('brood-pattern')) score += 0.5;
-      if (selectedObservations.includes('pop-strong')) score += 0.5;
-      
-      // Negative factors
-      if (queenSeen === false) score -= 1;
-      if (varroaPerDay && varroaPerDay > 5) score -= 1;
-      if (temperament === 'Aggressiv') score -= 0.5;
-      if (selectedObservations.includes('brood-disease')) score -= 2;
-      if (selectedObservations.includes('pop-weak')) score -= 1;
-      
-      return Math.max(1, Math.min(5, Math.round(score)));
-    };
-
-    // Calculate hive status based on inspection data
-    const calculateHiveStatus = (inspection) => {
-      if (inspection.varroaPerDay > 5 || inspection.queenSeen === false) {
-        return 'critical';
-      }
-      if (inspection.varroaPerDay > 2 || inspection.temperament === 'Aggressiv') {
-        return 'warning';
-      }
-      if (inspection.queenSeen === true && inspection.varroaPerDay <= 2) {
-        return 'excellent';
-      }
-      return 'good';
-    };
-
-    // Calculate population based on brood frames
-    const calculatePopulation = (broodFrames) => {
-      if (broodFrames >= 8) return 'Stark';
-      if (broodFrames >= 5) return 'Medel';
-      return 'Svag';
-    };
-
     console.log('Creating inspection object...');
 
     // Create inspection object
@@ -283,35 +344,43 @@ export default function AddInspectionScreen() {
       newQueenColor: newQueenAdded && newQueenMarked ? newQueenColor : null,
       newQueenWingClipped: newQueenAdded ? newQueenWingClipped : null,
       createdAt: new Date().toISOString(),
-      rating: calculateInspectionRating(),
-      findings: [], // Will be populated based on observations
+      rating: 3, // Will be updated by AI analysis
+      findings: [], // Will be populated by AI analysis
+      aiAnalysis: null, // Will be populated by AI
     };
 
-    console.log('Generating findings...');
-
-    // Generate findings based on observations and data
-    const findings = [];
-    if (queenSeen === true) findings.push('Drottning sedd');
-    if (queenSeen === false) findings.push('Drottning ej sedd');
-    if (varroaPerDay) findings.push(`Varroa: ${varroaPerDay.toFixed(1)}/dag (${varroaLevel})`);
-    if (temperament) findings.push(`Temperament: ${temperament}`);
-    if (isVarroaTreatment) findings.push(`Behandling: ${treatmentType}`);
-    if (isWintering) findings.push(`Invintring: ${winterFeed} kg foder`);
-    if (newQueenAdded) findings.push('Ny drottning tillagd');
-    
-    newInspection.findings = findings;
-
-    console.log('Saving inspection to AsyncStorage...');
+    console.log('Analyzing inspection with AI...');
 
     // Save inspection to AsyncStorage
     const saveInspection = async () => {
       try {
+        // Get AI analysis
+        const aiAnalysis = await analyzeInspectionWithAI(newInspection);
+        
+        // Update inspection with AI analysis
+        newInspection.aiAnalysis = aiAnalysis;
+        newInspection.findings = aiAnalysis.observations || [];
+        newInspection.rating = aiAnalysis.status === 'excellent' ? 5 : 
+                              aiAnalysis.status === 'good' ? 4 : 
+                              aiAnalysis.status === 'warning' ? 3 : 2;
+        
         const existingInspections = JSON.parse(await AsyncStorage.getItem('inspections') || '[]');
         console.log('Existing inspections:', existingInspections.length);
         
         const updatedInspections = [...existingInspections, newInspection];
         await AsyncStorage.setItem('inspections', JSON.stringify(updatedInspections));
         console.log('Inspection saved successfully');
+
+        // Calculate hive status and population based on AI analysis
+        const calculateHiveStatus = () => {
+          return aiAnalysis.status || 'good';
+        };
+
+        const calculatePopulation = (broodFrames) => {
+          if (broodFrames >= 8) return 'Stark';
+          if (broodFrames >= 5) return 'Medel';
+          return 'Svag';
+        };
 
         // If new queen was added, update the hive data
         if (newQueenAdded) {
@@ -327,7 +396,7 @@ export default function AddInspectionScreen() {
                 queenWingClipped: newQueenWingClipped,
                 queenAddedDate: new Date().toISOString(),
                 lastInspection: date,
-                status: calculateHiveStatus(newInspection),
+                status: calculateHiveStatus(),
                 population: calculatePopulation(broodFramesNum),
                 varroa: varroaPerDay ? `${varroaPerDay.toFixed(1)}/dag` : hive.varroa,
                 frames: `${broodFramesNum}/${totalFramesNum}`,
@@ -345,7 +414,7 @@ export default function AddInspectionScreen() {
               return {
                 ...hive,
                 lastInspection: date,
-                status: calculateHiveStatus(newInspection),
+                status: calculateHiveStatus(),
                 population: calculatePopulation(broodFramesNum),
                 varroa: varroaPerDay ? `${varroaPerDay.toFixed(1)}/dag` : hive.varroa,
                 frames: `${broodFramesNum}/${totalFramesNum}`,
@@ -357,9 +426,15 @@ export default function AddInspectionScreen() {
         }
         
         console.log('All data saved successfully');
+        
+        // Show AI recommendations in alert
+        const recommendationsText = aiAnalysis.recommendations ? 
+          aiAnalysis.recommendations.slice(0, 2).join('\n• ') : 
+          'Inga specifika rekommendationer';
+          
         Alert.alert(
-          'Inspektion sparad!', 
-          `Inspektion av ${selectedHive} har registrerats${newQueenAdded ? ' med ny drottning' : ''}`,
+          'Inspektion analyserad!', 
+          `AI-analys för ${selectedHive}:\n\n• ${recommendationsText}${aiAnalysis.priority_actions?.length > 0 ? '\n\nPrioriterade åtgärder:\n• ' + aiAnalysis.priority_actions[0] : ''}`,
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } catch (error) {

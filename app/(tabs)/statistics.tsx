@@ -263,48 +263,84 @@ export default function StatisticsScreen() {
           <View style={styles.insightsContainer}>
             <Text style={styles.insightsTitle}>Insikter och rekommendationer</Text>
             
-            <View style={styles.insightCard}>
-              <View style={[styles.insightIcon, { backgroundColor: '#8FBC8F' + '20' }]}>
-                <TrendingUp size={20} color="#8FBC8F" />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>Bra säsong</Text>
-                <Text style={styles.insightText}>
-                  Din honungsskörd ligger 15% över förra året. Fortsätt med nuvarande rutiner.
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.insightCard}>
-              <View style={[styles.insightIcon, { backgroundColor: '#FF8C42' + '20' }]}>
-                <Bug size={20} color="#FF8C42" />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>Övervaka varroa</Text>
-                <Text style={styles.insightText}>
-                  {(() => {
-                    const highVarroaInspections = inspections.filter(i => i.varroaPerDay > 5);
-                    if (highVarroaInspections.length > 0) {
-                      const latestHigh = highVarroaInspections.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-                      return `${latestHigh.hive} visar ${latestHigh.varroaPerDay.toFixed(1)} varroa/dag (högt). Planera behandling omedelbart.`;
-                    }
-                    return 'Varroavärden ser bra ut. Fortsätt med regelbunden övervakning.';
-                  })()}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.insightCard}>
-              <View style={[styles.insightIcon, { backgroundColor: '#F7B801' + '20' }]}>
-                <Calendar size={20} color="#F7B801" />
-              </View>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>Inspektionsschema</Text>
-                <Text style={styles.insightText}>
-                  Du har gjort 48 inspektioner i år - perfekt frekvens för 12 kupor.
-                </Text>
-              </View>
-            </View>
+            {(() => {
+              // Get AI insights from recent inspections
+              const recentInspections = inspections
+                .filter(i => i.aiAnalysis)
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .slice(0, 5);
+              
+              if (recentInspections.length === 0) {
+                return (
+                  <View style={styles.insightCard}>
+                    <View style={[styles.insightIcon, { backgroundColor: '#8B7355' + '20' }]}>
+                      <TrendingUp size={20} color="#8B7355" />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <Text style={styles.insightTitle}>AI-analys kommer snart</Text>
+                      <Text style={styles.insightText}>
+                        Gör fler inspektioner för att få AI-genererade insikter och rekommendationer.
+                      </Text>
+                    </View>
+                  </View>
+                );
+              }
+              
+              // Aggregate AI recommendations
+              const allRecommendations = recentInspections
+                .flatMap(i => i.aiAnalysis.recommendations || [])
+                .slice(0, 3);
+              
+              const criticalActions = recentInspections
+                .flatMap(i => i.aiAnalysis.priority_actions || [])
+                .slice(0, 2);
+              
+              return (
+                <>
+                  {criticalActions.length > 0 && (
+                    <View style={styles.insightCard}>
+                      <View style={[styles.insightIcon, { backgroundColor: '#E74C3C' + '20' }]}>
+                        <Bug size={20} color="#E74C3C" />
+                      </View>
+                      <View style={styles.insightContent}>
+                        <Text style={styles.insightTitle}>Prioriterade åtgärder</Text>
+                        <Text style={styles.insightText}>
+                          {criticalActions.join('\n• ')}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                  
+                  {allRecommendations.length > 0 && (
+                    <View style={styles.insightCard}>
+                      <View style={[styles.insightIcon, { backgroundColor: '#8FBC8F' + '20' }]}>
+                        <TrendingUp size={20} color="#8FBC8F" />
+                      </View>
+                      <View style={styles.insightContent}>
+                        <Text style={styles.insightTitle}>AI-rekommendationer</Text>
+                        <Text style={styles.insightText}>
+                          • {allRecommendations.slice(0, 2).join('\n• ')}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                  
+                  <View style={styles.insightCard}>
+                    <View style={[styles.insightIcon, { backgroundColor: '#F7B801' + '20' }]}>
+                      <Calendar size={20} color="#F7B801" />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <Text style={styles.insightTitle}>Inspektionsschema</Text>
+                      <Text style={styles.insightText}>
+                        Du har gjort {inspections.length} inspektioner. AI föreslår nästa inspektion inom {
+                          recentInspections[0]?.aiAnalysis?.next_inspection || '14'
+                        } dagar.
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              );
+            })()}
           </View>
         </ScrollView>
       </LinearGradient>

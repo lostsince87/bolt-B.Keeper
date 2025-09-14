@@ -295,6 +295,46 @@ export default function InspectionDetailsScreen() {
             </View>
           )}
 
+          {/* AI Analysis Card */}
+          {inspection.aiAnalysis && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>AI-analys och rekommendationer</Text>
+              
+              {inspection.aiAnalysis.recommendations && inspection.aiAnalysis.recommendations.length > 0 && (
+                <View style={styles.aiSection}>
+                  <Text style={styles.aiSectionTitle}>Rekommendationer:</Text>
+                  {inspection.aiAnalysis.recommendations.map((rec, index) => (
+                    <View key={index} style={styles.aiRecommendation}>
+                      <View style={styles.aiDot} />
+                      <Text style={styles.aiRecommendationText}>{rec}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              
+              {inspection.aiAnalysis.priority_actions && inspection.aiAnalysis.priority_actions.length > 0 && (
+                <View style={styles.aiSection}>
+                  <Text style={[styles.aiSectionTitle, { color: '#E74C3C' }]}>Prioriterade åtgärder:</Text>
+                  {inspection.aiAnalysis.priority_actions.map((action, index) => (
+                    <View key={index} style={styles.aiPriorityAction}>
+                      <View style={[styles.aiDot, { backgroundColor: '#E74C3C' }]} />
+                      <Text style={[styles.aiRecommendationText, { color: '#E74C3C', fontWeight: '600' }]}>{action}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              
+              {inspection.aiAnalysis.next_inspection && (
+                <View style={styles.nextInspectionContainer}>
+                  <Calendar size={20} color="#F7B801" />
+                  <Text style={styles.nextInspectionText}>
+                    Nästa inspektion rekommenderas inom {inspection.aiAnalysis.next_inspection} dagar
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Notes Card */}
           {/* Observations Card */}
           {inspection.observations && inspection.observations.length > 0 && (
@@ -620,5 +660,57 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#8B7355',
     fontStyle: 'italic',
+  },
+  aiSection: {
+    marginBottom: 16,
+  },
+  aiSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#8FBC8F',
+    marginBottom: 8,
+  },
+  aiRecommendation: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingLeft: 4,
+  },
+  aiPriorityAction: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingLeft: 4,
+    backgroundColor: '#E74C3C10',
+    borderRadius: 8,
+    padding: 8,
+  },
+  aiDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#8FBC8F',
+    marginRight: 8,
+    marginTop: 6,
+  },
+  aiRecommendationText: {
+    fontSize: 14,
+    color: '#8B7355',
+    lineHeight: 20,
+    flex: 1,
+  },
+  nextInspectionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7B80110',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  nextInspectionText: {
+    fontSize: 14,
+    color: '#F7B801',
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
