@@ -5,6 +5,7 @@ import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTr
 import { Snowflake, Baby, OctagonAlert as AlertOctagon } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Alert, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
@@ -103,11 +104,14 @@ export default function HivesScreen() {
   const [apiaries, setApiaries] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedApiary, setSelectedApiary] = useState(null);
+  const mountedRef = useRef(true);
 
   // ============================================
   // DATA LADDNING (Data Loading)
   // ============================================
   useEffect(() => {
+    mountedRef.current = true;
+    
     const loadApiaries = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -126,6 +130,10 @@ export default function HivesScreen() {
     };
     
     loadApiaries();
+    
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const loadApiariesFromSupabase = async () => {
@@ -210,10 +218,14 @@ export default function HivesScreen() {
         });
       }
 
-      setApiaries(allApiaries);
+      if (mountedRef.current) {
+        setApiaries(allApiaries);
+      }
     } catch (error) {
       console.error('Error loading apiaries from Supabase:', error);
-      await loadApiariesFromStorage(); // Fallback
+      if (mountedRef.current) {
+        await loadApiariesFromStorage(); // Fallback
+      }
     }
   };
 
@@ -292,7 +304,9 @@ export default function HivesScreen() {
           hives: defaultHives
         };
         
-        setApiaries([defaultApiary]);
+        if (mountedRef.current) {
+          setApiaries([defaultApiary]);
+        }
         await AsyncStorage.setItem('hives', JSON.stringify(defaultHives));
       } else {
         const localApiary = {
@@ -304,11 +318,15 @@ export default function HivesScreen() {
           role: 'owner',
           hives: validHives
         };
-        setApiaries([localApiary]);
+        if (mountedRef.current) {
+          setApiaries([localApiary]);
+        }
       }
     } catch (error) {
       console.log('Error loading from storage:', error);
-      setApiaries([]);
+      if (mountedRef.current) {
+        setApiaries([]);
+      }
     }
   };
 
@@ -437,23 +455,31 @@ export default function HivesScreen() {
           }))
         ];
 
-        setSelectedApiary({
-          ...apiary,
-          hives: allHives
-        });
+        if (mountedRef.current) {
+          setSelectedApiary({
+            ...apiary,
+            hives: allHives
+          });
+        }
       } else {
         // Lokal bigård - använd befintliga kupor
-        setSelectedApiary(apiary);
+        if (mountedRef.current) {
+          setSelectedApiary(apiary);
+        }
       }
     } catch (error) {
       console.error('Error loading hives for apiary:', error);
-      setSelectedApiary(apiary); // Fallback
+      if (mountedRef.current) {
+        setSelectedApiary(apiary); // Fallback
+      }
     }
   };
 
   // Gå tillbaka till bigårdsvy
   const handleBackToApiaries = () => {
-    setSelectedApiary(null);
+    if (mountedRef.current) {
+      setSelectedApiary(null);
+    }
   };
 
   // Lämna delad bigård/kupa
@@ -521,16 +547,47 @@ export default function HivesScreen() {
   // Skapa och dela kod för bigård
   const createAndShareApiaryCode = async (apiary) => {
     try {
-      // För nu, visa en placeholder
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Fel', 'Du måste vara inloggad för att dela bigårdar');
+        return;
+      }
+
+      // Hämta användarens profil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) {
+        Alert.alert('Fel', 'Användarprofil hittades inte');
+        return;
+      }
+
+      // Skapa delningskod för bigården
+      const { data: sharingCode, error } = await supabase
+        .from('sharing_codes')
+        .insert({
+          resource_type: 'apiary',
+          resource_id: apiary.id,
+          created_by: profile.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Dela koden
       const shareResult = await Share.share({
-        message: `Gå med i min B.Keeper bigård "${apiary.name}"!\n\nAnvänd delningskoden: abc123de\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
+        message: `Gå med i min B.Keeper bigård "${apiary.name}"!\n\nAnvänd delningskoden: ${sharingCode.code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
         title: `Inbjudan till ${apiary.name}`
       });
       
       console.log('Apiary share result:', shareResult);
     } catch (error) {
       console.error('Error sharing apiary:', error);
-      Alert.alert('Fel', 'Kunde inte dela bigården');
+      Alert.alert('Fel', 'Kunde inte skapa delningskod för bigården: ' + error.message);
     }
   };
 
