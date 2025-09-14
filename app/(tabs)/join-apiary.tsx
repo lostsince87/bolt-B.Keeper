@@ -18,22 +18,27 @@ export default function JoinApiaryScreen() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('join_apiary_by_invite_code', {
-        invite_code_param: inviteCode.trim()
+      const { data, error } = await supabase.rpc('join_via_sharing_code', {
+        sharing_code_param: inviteCode.trim()
       });
 
       if (error) throw error;
 
       if (data.success) {
+        const resourceType = data.resource_type === 'apiary' ? 'bigården' : 'kupan';
         Alert.alert(
           'Välkommen!',
-          `Du har gått med i bigården "${data.apiary_name}"`,
+          `Du har fått åtkomst till ${resourceType}!`,
           [
             {
               text: 'OK',
               onPress: () => {
                 setInviteCode('');
-                router.push('/apiaries');
+                if (data.resource_type === 'apiary') {
+                  router.push('/apiaries');
+                } else {
+                  router.push('/hives');
+                }
               }
             }
           ]
@@ -43,7 +48,7 @@ export default function JoinApiaryScreen() {
       }
     } catch (error) {
       console.error('Error joining apiary:', error);
-      Alert.alert('Fel', 'Kunde inte gå med i bigården');
+      Alert.alert('Fel', 'Kunde inte använda delningskoden');
     } finally {
       setLoading(false);
     }
@@ -68,12 +73,12 @@ export default function JoinApiaryScreen() {
 
             <Text style={styles.mainTitle}>Gå med i en bigård</Text>
             <Text style={styles.description}>
-              Använd en inbjudningskod för att gå med i en befintlig bigård och börja samarbeta med andra biodlare.
+              Använd en delningskod för att få åtkomst till en bigård eller specifik kupa och börja samarbeta med andra biodlare.
             </Text>
 
             <View style={styles.formContainer}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Inbjudningskod</Text>
+                <Text style={styles.label}>Delningskod</Text>
                 <View style={styles.inputContainer}>
                   <Key size={20} color="#8B7355" />
                   <TextInput
@@ -87,7 +92,7 @@ export default function JoinApiaryScreen() {
                   />
                 </View>
                 <Text style={styles.inputHint}>
-                  Koden består vanligtvis av 8 tecken och får du från bigårdens ägare
+                  Koden består av 8 tecken och får du från ägaren av bigården eller kupan
                 </Text>
               </View>
 
@@ -98,18 +103,18 @@ export default function JoinApiaryScreen() {
               >
                 <Users size={24} color="white" />
                 <Text style={styles.joinButtonText}>
-                  {loading ? 'Går med...' : 'Gå med i bigård'}
+                  {loading ? 'Ansluter...' : 'Använd delningskod'}
                 </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.infoSection}>
-              <Text style={styles.infoTitle}>Vad händer när du går med?</Text>
+              <Text style={styles.infoTitle}>Vad händer när du använder koden?</Text>
               <View style={styles.infoList}>
                 <View style={styles.infoItem}>
                   <Text style={styles.infoBullet}>•</Text>
                   <Text style={styles.infoText}>
-                    Du får tillgång till alla kupor i bigården
+                    Du får tillgång till den delade bigården eller kupan
                   </Text>
                 </View>
                 <View style={styles.infoItem}>
@@ -136,8 +141,8 @@ export default function JoinApiaryScreen() {
             <View style={styles.helpSection}>
               <Text style={styles.helpTitle}>Behöver du hjälp?</Text>
               <Text style={styles.helpText}>
-                Kontakta personen som bjöd in dig för att få rätt inbjudningskod. 
-                Koden är unik för varje bigård och krävs för att gå med.
+                Kontakta personen som bjöd in dig för att få rätt delningskod. 
+                Koden är unik för varje bigård eller kupa.
               </Text>
             </View>
           </View>

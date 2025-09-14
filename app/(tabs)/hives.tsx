@@ -1,12 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight } from 'lucide-react-native';
+import { Plus, MapPin, Thermometer, Droplets, Activity, TriangleAlert as AlertTriangle, Crown, Scissors, Trash2, ChevronRight, Share2 } from 'lucide-react-native';
 import { Snowflake, Baby, OctagonAlert as AlertOctagon } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
 
 // ============================================
 // HJÄLPFUNKTIONER (Helper Functions)
@@ -244,6 +245,51 @@ export default function HivesScreen() {
     setSelectedLocation('');
   };
 
+  // Skapa och dela kod för specifik kupa
+  const createAndShareHiveCode = async (hive) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Fel', 'Du måste vara inloggad för att dela kupor');
+        return;
+      }
+
+      // Hämta användarens profil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) {
+        Alert.alert('Fel', 'Användarprofil hittades inte');
+        return;
+      }
+
+      // Skapa delningskod för kupan
+      const { data: sharingCode, error } = await supabase
+        .from('sharing_codes')
+        .insert({
+          resource_type: 'hive',
+          resource_id: hive.id,
+          created_by: profile.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Dela koden
+      await Share.share({
+        message: `Gå med och hjälp till med min bikupa "${hive.name}"!\n\nAnvänd delningskoden: ${sharingCode.code}\n\nLadda ner B.Keeper appen och gå till Inställningar > Gå med i bigård`,
+        title: `Inbjudan till ${hive.name}`
+      });
+    } catch (error) {
+      console.error('Error creating hive sharing code:', error);
+      Alert.alert('Fel', 'Kunde inte skapa delningskod för kupan');
+    }
+  };
+
   // ============================================
   // BERÄKNADE VÄRDEN (Calculated Values)
   // ============================================
@@ -411,6 +457,12 @@ export default function HivesScreen() {
                       </Text>
                     </View>
                     <View style={styles.footerRight}>
+                      <TouchableOpacity 
+                        style={styles.shareHiveButton}
+                        onPress={() => createAndShareHiveCode(hive)}
+                      >
+                        <Share2 size={16} color="#F7B801" />
+                      </TouchableOpacity>
                       <Text style={styles.frames}>Ramar: {hive.frames}</Text>
                       {hive.hasQueen && hive.queenAddedDate && (
                         <Text style={styles.queenAge}>
@@ -666,6 +718,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8B7355',
     fontStyle: 'italic',
+  },
+  shareHiveButton: {
+    backgroundColor: '#F7B801' + '20',
+    borderRadius: 16,
+    padding: 8,
+    marginBottom: 8,
   },
 });
 // ============================================
