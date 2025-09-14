@@ -22,13 +22,6 @@ export default function SettingsScreen() {
           route: '/profile'
         },
         {
-          icon: Users,
-          title: 'Mina bigårdar',
-          subtitle: 'Hantera och dela dina samhällen',
-          action: 'navigation',
-          route: '/apiaries'
-        },
-        {
           icon: Share2,
           title: 'Gå med i bigård',
           subtitle: 'Använd inbjudningskod för att gå med',
