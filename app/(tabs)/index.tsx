@@ -24,9 +24,9 @@ export default function HomeScreen() {
         if (savedTasks.length === 0) {
           // Default tasks if none saved
           const defaultTasks = [
-            { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', time: '14:00', priority: 'hög', color: '#E74C3C' },
-            { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', time: '10:00', priority: 'medel', color: '#F39C12' },
-            { id: 3, task: 'Honung slungning', date: '3 dagar', time: '09:00', priority: 'låg', color: '#8FBC8F' },
+            { id: 1, task: 'Inspektera Kupa 3', date: 'Idag', priority: 'hög', color: '#E74C3C' },
+            { id: 2, task: 'Varroabehandling Kupa 7-9', date: 'Imorgon', priority: 'medel', color: '#F39C12' },
+            { id: 3, task: 'Honung slungning', date: '3 dagar', priority: 'låg', color: '#8FBC8F' },
           ];
           setTasks(defaultTasks);
           await AsyncStorage.setItem('tasks', JSON.stringify(defaultTasks));
@@ -181,9 +181,11 @@ export default function HomeScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <View style={styles.logoPlaceholder}>
-                <Text style={styles.logoText}>B.Keeper</Text>
-              </View>
+              <Image 
+                source={require('@/assets/images/icon.png')} 
+                style={styles.logo}
+                resizeMode="contain"
+              />
             </View>
           </View>
 
@@ -220,7 +222,7 @@ export default function HomeScreen() {
                   <Text style={styles.taskTitle}>{task.task}</Text>
                   <View style={styles.taskMeta}>
                     <Calendar size={14} color="#8B7355" />
-                    <Text style={styles.taskDate}>{task.date} {task.time}</Text>
+                    <Text style={styles.taskDate}>{task.date}</Text>
                     <Text style={[styles.taskPriorityText, { color: task.color }]}>
                       <Text>• {task.priority.toUpperCase()} PRIORITET</Text>
                     </Text>
@@ -283,23 +285,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 0,
   },
-  logoPlaceholder: {
+  logo: {
     height: 100,
     width: 160,
-    backgroundColor: '#F7B801',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
   },
   section: {
     paddingHorizontal: 20,
