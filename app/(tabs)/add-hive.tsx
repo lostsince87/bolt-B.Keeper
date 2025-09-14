@@ -179,7 +179,7 @@ export default function AddHiveScreen() {
         Alert.alert(
           'Kupa sparad!', 
           `${hiveName} har lagts till på ${location}${frameCount <= 10 && isNucleus ? ' som avläggare' : ''}${hasQueen ? ' med drottning' : ''}`,
-          [{ text: 'OK', onPress: () => router.back() }]
+          [{ text: 'OK', onPress: () => router.push('/hives') }]
         );
       } catch (error) {
         console.error('Could not save hive:', error);

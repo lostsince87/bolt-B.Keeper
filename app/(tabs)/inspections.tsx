@@ -95,7 +95,12 @@ export default function InspectionsScreen() {
   // Filter inspections based on selected hive
   const filteredInspections = selectedHive 
     ? inspections.filter(inspection => inspection.hive === selectedHive)
-    : inspections;
+    : selectedLocation 
+      ? inspections.filter(inspection => {
+          const hive = hives.find(h => h.name === inspection.hive);
+          return hive && hive.location === selectedLocation;
+        })
+      : inspections;
 
   const handleInspectionPress = (inspection) => {
     router.push({
