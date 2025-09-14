@@ -34,11 +34,7 @@ export default function JoinApiaryScreen() {
               text: 'OK',
               onPress: () => {
                 setInviteCode('');
-                if (result.resource_type === 'apiary') {
-                  router.push('/apiaries');
-                } else {
-                  router.push('/hives');
-                }
+                router.push('/hives'); // Alla resurser visas nu i huvudvyn
               }
             }
           ]
