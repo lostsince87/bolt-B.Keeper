@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Bell, Shield, Database, CircleHelp as HelpCircle, Info, ChevronRight, Moon, Globe } from 'lucide-react-native';
+import { User, Bell, Shield, Database, CircleHelp as HelpCircle, Info, ChevronRight, Moon, Globe, Users, Share2 } from 'lucide-react-native';
 import { useState } from 'react';
+import { router } from 'expo-router';
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
@@ -11,13 +12,28 @@ export default function SettingsScreen() {
 
   const settingsSections = [
     {
-      title: 'Konto',
+      title: 'Konto & Delning',
       items: [
         {
           icon: User,
           title: 'Profil',
           subtitle: 'Redigera personlig information',
           action: 'navigation',
+          route: '/profile'
+        },
+        {
+          icon: Users,
+          title: 'Mina bigårdar',
+          subtitle: 'Hantera och dela dina samhällen',
+          action: 'navigation',
+          route: '/apiaries'
+        },
+        {
+          icon: Share2,
+          title: 'Gå med i bigård',
+          subtitle: 'Använd inbjudningskod för att gå med',
+          action: 'navigation',
+          route: '/join-apiary'
         },
         {
           icon: Bell,
@@ -87,12 +103,19 @@ export default function SettingsScreen() {
     },
   ];
 
+  const handleNavigation = (route?: string) => {
+    if (route) {
+      router.push(route);
+    }
+  };
+
   const renderSettingItem = (item: any, sectionIndex: number, itemIndex: number) => {
     return (
       <TouchableOpacity 
         key={`${sectionIndex}-${itemIndex}`} 
         style={styles.settingItem}
         disabled={item.action === 'toggle'}
+        onPress={() => item.route && handleNavigation(item.route)}
       >
         <View style={styles.settingIcon}>
           <item.icon size={24} color="#8B4513" />
